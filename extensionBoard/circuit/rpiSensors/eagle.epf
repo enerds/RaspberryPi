@@ -1,0 +1,28 @@
+[Eagle]
+Version="06 02 00"
+Platform="Linux"
+Serial="62191E841E-LSR-WLM-1EL"
+Globals="Globals"
+Desktop="Desktop"
+
+[Globals]
+AutoSaveProject=1
+UsedLibrary="/home/weis/.eagle/lbr/frames.lbr"
+UsedLibrary="/home/weis/.eagle/lbr/atmel.lbr"
+UsedLibrary="/home/weis/.eagle/lbr/con-harting-ml.lbr"
+UsedLibrary="/home/weis/.eagle/lbr/supply1.lbr"
+UsedLibrary="/home/weis/.eagle/lbr/pinhead.lbr"
+UsedLibrary="/home/weis/.eagle/lbr/con-wago-500.lbr"
+UsedLibrary="/home/weis/.eagle/lbr/resistor.lbr"
+UsedLibrary="/home/weis/.eagle/lbr/lcd16x2.lbr"
+UsedLibrary="/home/weis/.eagle/lbr/capacitor-wima.lbr"
+
+[Win_1]
+Type="Control Panel"
+Loc="38 0 972 995"
+State=2
+Number=0
+
+[Desktop]
+Screen="1920 1080"
+Window="Win_1"
