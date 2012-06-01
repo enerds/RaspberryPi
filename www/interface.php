@@ -166,7 +166,7 @@
 				<h2>Set Pin values</h2>
 				<!-- Way to call the functions -->
 <?php
-	for($i = 0; $i < 17; $i++){
+	for($i = 17; $i < 26; $i++){
 		echo '<span class="smallbutton" onclick="setPinValue('.$i.',1)" >P'.$i.'</span>
 		<span class="smallbutton negative" onclick="setPinValue('.$i.',0)">P'.$i.'</span>';
 	}

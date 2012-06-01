@@ -120,9 +120,10 @@
 				}else{
 					$onoff = $_POST["onoff"];
 					$pin = $_POST["pin"];
-					if($pin >= 0 && $pin < 17){
+					if($pin == 17 || $pin == 18 || $pin == 21 || $pin == 22 || $pin == 23 || $pin == 24 || $pin == 25){
 						if($onoff >= 0 && $onoff <= 1){
-							exec("/usr/bin/pinset 0 ".$pin." ".$onoff);
+							//exec("/usr/bin/pinset 0 ".$pin." ".$onoff);
+                            exec("echo \"1\" > /sys/class/gpio".$pin."/value");
 							echo "OK";
 						}else{
 							echo "Err: Invalid pin setting";
