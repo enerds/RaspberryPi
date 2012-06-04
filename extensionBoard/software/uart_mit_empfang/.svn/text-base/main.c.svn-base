@@ -1,0 +1,237 @@
+/*
+*******************************************************************************
+*
+* UART Interrupt Demo
+*
+* ATmega8 mit 8 MHz Quarz an XTAL1/XTAL2
+*
+* LOW Fuse Byte = 0xEF
+*
+* An PD5 muss eine LED mit 1 kOhm Vorwiderstand angeschlossen werden
+* An PD0/PD1 ist ein MAX232 angeschlosssen, um Daten vom PC zu empfangen/senden
+*
+*******************************************************************************
+*/
+ 
+// Systemtakt in Hz, das L am Ende ist wichtig, NICHT UL verwenden!
+#define F_CPU 8000000L               
+// "Morsedauer" für ein Bit in Millisekunden
+#define BITZEIT 100     
+ 
+#include <string.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <util/delay.h>
+ 
+// Baudrate, das L am Ende ist wichtig, NICHT UL verwenden!
+#define BAUD 9600L          
+ 
+// Berechnungen
+// clever runden
+#define UBRR_VAL  ((F_CPU+BAUD*8)/(BAUD*16)-1)  
+// Reale Baudrate
+#define BAUD_REAL (F_CPU/(16*(UBRR_VAL+1)))     
+// Fehler in Promille 
+#define BAUD_ERROR ((BAUD_REAL*1000)/BAUD-1000) 
+ 
+#if ((BAUD_ERROR>10) || (BAUD_ERROR<-10))
+  #error Systematischer Fehler der Baudrate grösser 1% und damit zu hoch! 
+#endif
+ 
+// globale Variablen für den UART
+ 
+// Puffergrösse in Bytes, RX und TX sind gleich gross
+#define uart_buffer_size 32             
+ 
+volatile uint8_t uart_rx_flag=0;            // Flag, String komplett empfangen
+volatile uint8_t uart_tx_flag=1;            // Flag, String komplett gesendet
+char uart_rx_buffer[uart_buffer_size];      // Empfangspuffer
+char uart_tx_buffer[uart_buffer_size];      // Sendepuffer
+ 
+// lange, variable Wartezeit, Einheit in Millisekunden
+void long_delay(uint16_t ms) {
+    for (; ms>0; ms--) _delay_ms(1);
+}
+ 
+// einen String senden
+// vor Aufruf der Funktion muss man prüfen, ob uart_t_flag==1 ist
+// nur dann kann ein neuer String gesendet werden
+ 
+void put_string(char *daten) {
+ 
+   if (uart_tx_flag==1) {
+      // String daten ind en Sendepuffer kopieren
+      strcpy(uart_tx_buffer, daten);      
+      // Flag für 'Senden ist komplett' löschen, 
+      uart_tx_flag = 0;                    
+      // UDRE Interrupt einschalten, los gehts
+      UCSRB |= (1<<UDRIE); 
+   }
+}
+ 
+// einen empfangenen String kopieren
+// vor Aufruf der Funktion muss man prüfen, ob uart_rx_flag==1 ist
+// anderenfalls ist der RX Buffer noch ungültig
+ 
+void get_string(char *daten) {
+ 
+   if (uart_rx_flag==1) {
+      // String kopieren
+      strcpy(daten, uart_rx_buffer);      
+      // Servo-Control
+      // wenn 1. buchstabe r/l ist, ...
+      if(daten[0] == 'r'){
+	      OCR1A += 100;
+      }
+      if(daten[0] == 'l'){
+	      OCR1A -= 100;
+      }
+      // Flag löschen
+      uart_rx_flag = 0;                    
+   }
+}
+
+/*
+// Ein Byte im RS232 Format auf eine LED ausgeben
+ 
+void morse(uint8_t data) {
+    uint8_t i;
+ 
+    // Startbit, immer 0
+    PORTD &= ~(1 << PD5);           // LED aus
+    long_delay(BITZEIT);
+ 
+    for(i=0; i<8; i++) {
+        if (data & 0x01)            // Prüfe Bit #0
+            PORTD |= (1 << PD5);    // LED an
+        else
+            PORTD &= ~(1 << PD5);   // LED aus      
+        long_delay(BITZEIT);        
+        data >>= 1;                 // nächstes Bit auf Bit #0 schieben
+    }
+    // Stopbit, immer 1
+    PORTD |= (1 << PD5);            // LED an
+    long_delay(BITZEIT);
+}
+*/
+
+
+//------------------- Hauptprogramm
+ 
+int main (void) {
+ 
+    char stringbuffer[64];  // Allgemeiner Puffer für Strings
+    uint8_t buffer_full=0;  // noch ein Flag, aber nur in der Hauptschleife
+    char * charpointer;     // Hilfszeiger
+    
+// IO konfigurieren
+ 
+    DDRB = 0xFF;
+    DDRC = 0xFF;
+    DDRD = 0xFF;
+ 
+// Servo konfigurieren
+// Werte für OCR1A: zw. 650 und 1900!
+    ICR1=10000;
+    TCCR1A|=(0<<COM1A0)|(1<<COM1A1)|(0<<COM1B0)|(0<<COM1B1)|(0<<FOC1A)|(0<<FOC1B)|(1<<WGM11)|(0<<WGM10);
+    TCCR1B|=(0<<ICNC1)|(0<<ICES1)|(1<<WGM13)|(1<<WGM12)|(0<<CS12)|(1<<CS11)|(0<<CS10);
+    OCR1A = 1300;
+
+// UART konfigurieren
+ 
+    UBRRH = UBRR_VAL >> 8;
+    UBRRL = UBRR_VAL & 0xFF;
+    UCSRB = (1<<RXCIE) | (1<<RXEN) | (1<<TXEN); 
+ 
+// Stringpuffer initialisieren
+ 
+    stringbuffer[0] = '\n';
+    stringbuffer[1] = '\r';
+ 
+// Interrupts freigeben
+ 
+    sei();
+    
+// Endlose Hauptschleife
+ 
+    while(1) {
+        // Wurde ein kompletter String empfangen 
+        // und der Buffer ist leer?
+        if (uart_rx_flag==1 && buffer_full==0) {    
+            // ja, dann String lesen, 
+            // die ersten zwei Zeichen 
+            // aber nicht überschreiben
+            get_string(stringbuffer+2);             
+            buffer_full=1;
+	}
+
+        // Ist letzte Stringsendung abgeschlossen 
+        // und ein neuer String verfügbar?
+        if (uart_tx_flag==1 && buffer_full==1) {    
+            // Newline + Carrige return anfügen
+            strcat(stringbuffer, "\n\r");           
+            put_string(stringbuffer); // zurücksenden
+            buffer_full=0; // Buffer ist wieder verfügbar
+	    /*
+            // Alle Zeichen per LED morsen
+            charpointer = stringbuffer;
+            while(*charpointer) morse(*charpointer++);
+	    */
+        }
+    }
+}
+ 
+// UART RX complete interrupt
+ 
+// hier werden Daten vom PC empfangen und in einem String zwischengespeichert
+// Wird ein Stringterminator empfangen, wird ein Flag gesetzt, welches dem 
+// Hauptprogramm den kompletten Empfang signalisiert
+ 
+ISR(USART_RXC_vect) {
+    
+    static uint8_t uart_rx_cnt;     // Zähler für empfangene Zeichen
+    uint8_t data;
+ 
+    // Daten auslesen, dadurch wird das Interruptflag gelöscht              
+    data = UDR;
+    
+    // Ist Puffer frei für neue Daten? 
+    if (!uart_rx_flag) {
+        // ja, ist Ende des Strings (RETURN) erreicht?
+        if (data=='\r') {
+            // ja, dann String terminieren
+            uart_rx_buffer[uart_rx_cnt]=0;              
+            // Flag für 'Empfangspuffer voll' setzen
+            uart_rx_flag=1;
+            // Zähler zurücksetzen
+            uart_rx_cnt=0;
+        }
+        else if (uart_rx_cnt<(uart_buffer_size-1)) {     
+            // Daten in Puffer speichern
+            // aber durch if() Pufferüberlauf vermeiden
+            uart_rx_buffer[uart_rx_cnt]=data;          
+            uart_rx_cnt++; // Zähler erhöhen
+        }
+    }
+}
+ 
+// UART TX data register empty interrupt
+// hier werden neue Daten in das UART Senderegister geladen
+ 
+ISR(USART_UDRE_vect) {
+    // Zeiger auf Sendepuffer
+    static char* uart_tx_p = uart_tx_buffer;    
+    uint8_t data;
+ 
+    // zu sendendes Zeichen lesen, 
+    // Zeiger auf Sendepuffer erhöhen
+    data = *uart_tx_p++;
+    
+    // Ende des nullterminierten Strings erreicht?
+    if (data==0 ) {        
+        UCSRB &= ~(1<<UDRIE);       // ja, dann UDRE Interrupt ausschalten        
+        uart_tx_p = uart_tx_buffer; // Pointer zurücksetzen
+        uart_tx_flag = 1;           // Flag setzen, Übertragung beeendet
+    }
+    else UDR = data;                // nein, Daten senden
+}
