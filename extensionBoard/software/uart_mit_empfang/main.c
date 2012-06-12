@@ -106,13 +106,13 @@ void transmit(int nHighPulses, int nLowPulses){
     PORTD |= (1<<STECKDOSENPIN);
 
     for(tmpDelay=0;tmpDelay < nPulseLength*nHighPulses;tmpDelay++){
-        _delay_ms(1);
+        _delay_us(1);
     }
 
     PORTD &= ~(1<<STECKDOSENPIN);
 
     for(tmpDelay=0;tmpDelay < nPulseLength*nLowPulses;tmpDelay++){
-        _delay_ms(1);
+        _delay_us(1);
     }
 
 }
@@ -235,13 +235,16 @@ int main (void) {
     //DDRD = 0xFF;
     DDRD |= (1<<STECKDOSENPIN); // Output pin für Steckdosensteuerung
 
+	/*
+	// FIXME: this is how you control a power outlet
     int mytmp = 0;
     for(mytmp=0;mytmp<100;mytmp++){
-        switchOn("11001", 2);
+        switchOn("11001", 2); // 1st parameter: 1st 5 dip-switches, 2nd parameter: the one switch that is on!
         _delay_ms(10000);
         switchOff("11001", 2);
         _delay_ms(10000);
     }
+	*/
 
 
     //DDRD = (DDRD|0x01);
