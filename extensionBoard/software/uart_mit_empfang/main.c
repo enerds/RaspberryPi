@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
  
  
 #define UBRR_VAL  ((F_CPU+BAUD*8)/(BAUD*16)-1)
@@ -31,10 +32,16 @@
 
 #define uart_buffer_size 256
 
+#define STECKDOSENPIN 2
+
 volatile uint8_t uart_rx_flag=0;            // Flag, String komplett empfangen
 volatile uint8_t uart_tx_flag=1;            // Flag, String komplett gesendet
 char uart_rx_buffer[uart_buffer_size];      // Empfangspuffer
 char uart_tx_buffer[uart_buffer_size];      // Sendepuffer
+
+int nRepeatTransmit = 10; // wie oft soll sendung an steckdose wiederholt werden
+int nProtocol = 1;
+int nPulseLength = 350;
 
 void put_string(char *daten) {
    if (uart_tx_flag == 1) {
@@ -51,7 +58,7 @@ void get_string(char *daten) {
    }
 }
 
-void send_ok(){
+void send_ok(void){
 	char message[4];
 	message[0] = 'O';
 	message[1] = 'K';
@@ -72,6 +79,149 @@ double res2temp(int res){
 	return (res - 815.0f) / 7.5f;
 }
 
+char* dec2binWzerofill(unsigned long Dec, unsigned int bitLength){
+  static char bin[64];
+  unsigned int i=0;
+
+  while (Dec > 0) {
+    bin[32+i++] = ((Dec & 1) > 0) ? '1' : '0';
+    Dec = Dec >> 1;
+  }
+
+  for (unsigned int j = 0; j< bitLength; j++) {
+    if (j >= bitLength - i) {
+      bin[j] = bin[ 31 + i - (j - (bitLength - i)) ];
+    }else {
+      bin[j] = '0';
+    }
+  }
+  bin[bitLength] = '\0';
+  
+  return bin;
+}
+
+void transmit(int nHighPulses, int nLowPulses){
+    int tmpDelay;
+    // set Output pin to high
+    PORTD |= (1<<STECKDOSENPIN);
+
+    for(tmpDelay=0;tmpDelay < nPulseLength*nHighPulses;tmpDelay++){
+        _delay_ms(1);
+    }
+
+    PORTD &= ~(1<<STECKDOSENPIN);
+
+    for(tmpDelay=0;tmpDelay < nPulseLength*nLowPulses;tmpDelay++){
+        _delay_ms(1);
+    }
+
+}
+
+void send0(void){
+	if(nProtocol == 1) transmit(1,3);
+	if(nProtocol == 2) transmit(1,2);
+}
+
+void send1(void){
+	if(nProtocol == 1) transmit(3,1);
+	if(nProtocol == 2) transmit(2,1);
+}
+
+void sendT0(void){
+    transmit(1,3);
+    transmit(1,3);
+}
+
+void sendT1(void){
+	transmit(3,1);
+	transmit(3,1);
+}
+
+void sendTF(void){
+	transmit(1,3);
+	transmit(3,1);
+}
+
+void sendSync(void){
+	if(nProtocol == 1) transmit(1,31);
+	if(nProtocol == 2) transmit(1,10);
+}
+
+char* getCodeWordA(char* sGroup, int nChannelCode, bool bStatus) {
+   int nReturnPos = 0;
+   static char sReturn[13];
+
+  char* code[6] = { "FFFFF", "0FFFF", "F0FFF", "FF0FF", "FFF0F", "FFFF0" };
+
+  if (nChannelCode < 1 || nChannelCode > 5) {
+      return '\0';
+  }
+  
+  for (int i = 0; i<5; i++) {
+    if (sGroup[i] == '0') {
+      sReturn[nReturnPos++] = 'F';
+    } else if (sGroup[i] == '1') {
+      sReturn[nReturnPos++] = '0';
+    } else {
+      return '\0';
+    }
+  }
+  
+  for (int i = 0; i<5; i++) {
+    sReturn[nReturnPos++] = code[ nChannelCode ][i];
+  }
+  
+  if (bStatus) {
+    sReturn[nReturnPos++] = '0';
+    sReturn[nReturnPos++] = 'F';
+  } else {
+    sReturn[nReturnPos++] = 'F';
+    sReturn[nReturnPos++] = '0';
+  }
+  sReturn[nReturnPos] = '\0';
+
+  return sReturn;
+}
+
+/*
+void sendFilled(unsigned long Code, unsigned int length){
+	send(dec2binWzerofill(Code, length) );
+}
+
+void send(char* sCodeWord){
+  for (int nRepeat=0; nRepeat<nRepeatTransmit; nRepeat++) {
+	int i = 0;
+	while (sCodeWord[i] != '\0') {
+		if(sCodeWord[i] == '0') this->send0();
+		if(sCodeWord[i] == '1') this->send1();
+	i++;
+    }
+    sendSync();
+  }
+}
+*/
+
+void sendTriState(char* sCodeWord) {
+  for (int nRepeat=0; nRepeat<nRepeatTransmit; nRepeat++) {
+    int i = 0;
+    while (sCodeWord[i] != '\0') {
+	if(sCodeWord[i] == '0') sendT0();
+	if(sCodeWord[i] == 'F') sendTF();
+	if(sCodeWord[i] == '1') sendT1();
+	i++;
+    }
+    sendSync();    
+  }
+}
+
+void switchOn(char* sGroup, int nChannel){
+    sendTriState(getCodeWordA(sGroup, nChannel, true) );
+}
+
+void switchOff(char *sGroup, int nChannel){
+    sendTriState(getCodeWordA(sGroup, nChannel, false) );
+}
+
 int main (void) {
     char stringbuffer[64];  // Allgemeiner Puffer für Strings
     uint8_t buffer_full=0;  // noch ein Flag, aber nur in der Hauptschleife
@@ -83,6 +233,17 @@ int main (void) {
     DDRC = 0x00;
 	PORTC = 0x00;
     //DDRD = 0xFF;
+    DDRD |= (1<<STECKDOSENPIN); // Output pin für Steckdosensteuerung
+
+    int mytmp = 0;
+    for(mytmp=0;mytmp<100;mytmp++){
+        switchOn("11001", 2);
+        _delay_ms(10000);
+        switchOff("11001", 2);
+        _delay_ms(10000);
+    }
+
+
     //DDRD = (DDRD|0x01);
 
 	ADMUX = 0x00;
