@@ -19,59 +19,66 @@
    8:main.c        **** #include <stdlib.h>
    9:main.c        **** #include <stdio.h>
   10:main.c        **** #include <stdint.h>
-  11:main.c        ****  
+  11:main.c        **** #include <stdbool.h>
   12:main.c        ****  
-  13:main.c        **** #define UBRR_VAL  ((F_CPU+BAUD*8)/(BAUD*16)-1)
-  14:main.c        **** #define BAUD_REAL (F_CPU/(16*(UBRR_VAL+1)))
-  15:main.c        **** #define BAUD_ERROR ((BAUD_REAL*1000)/BAUD-1000)
-  16:main.c        **** #if ((BAUD_ERROR>10) || (BAUD_ERROR<-10))
-  17:main.c        ****   #error Systematischer Fehler der Baudrate grösser 1% und damit zu hoch! 
-  18:main.c        **** #endif
-  19:main.c        **** 
-  20:main.c        **** #define R_PC0 1000 // 1000 Ohm am Spannungsteiler von PC0
-  21:main.c        **** /* Connection to PC0 :
-  22:main.c        ****  ---------------+
-  23:main.c        ****                 |         +- R_PC0 == 1000 Ohm --- +3.3v
-  24:main.c        ****                 |         |
-  25:main.c        ****                 --- PC0 --+
-  26:main.c        ****                 |         |
-  27:main.c        ****                 |         +- Temp-Sensor --------- GND
-  28:main.c        ****                 |
+  13:main.c        ****  
+  14:main.c        **** #define UBRR_VAL  ((F_CPU+BAUD*8)/(BAUD*16)-1)
+  15:main.c        **** #define BAUD_REAL (F_CPU/(16*(UBRR_VAL+1)))
+  16:main.c        **** #define BAUD_ERROR ((BAUD_REAL*1000)/BAUD-1000)
+  17:main.c        **** #if ((BAUD_ERROR>10) || (BAUD_ERROR<-10))
+  18:main.c        ****   #error Systematischer Fehler der Baudrate grösser 1% und damit zu hoch! 
+  19:main.c        **** #endif
+  20:main.c        **** 
+  21:main.c        **** #define R_PC0 1000 // 1000 Ohm am Spannungsteiler von PC0
+  22:main.c        **** /* Connection to PC0 :
+  23:main.c        ****  ---------------+
+  24:main.c        ****                 |         +- R_PC0 == 1000 Ohm --- +3.3v
+  25:main.c        ****                 |         |
+  26:main.c        ****                 --- PC0 --+
+  27:main.c        ****                 |         |
+  28:main.c        ****                 |         +- Temp-Sensor --------- GND
   29:main.c        ****                 |
-  30:main.c        **** */
-  31:main.c        **** 
-  32:main.c        **** #define uart_buffer_size 256
-  33:main.c        **** 
-  34:main.c        **** volatile uint8_t uart_rx_flag=0;            // Flag, String komplett empfangen
-  35:main.c        **** volatile uint8_t uart_tx_flag=1;            // Flag, String komplett gesendet
-  36:main.c        **** char uart_rx_buffer[uart_buffer_size];      // Empfangspuffer
-  37:main.c        **** char uart_tx_buffer[uart_buffer_size];      // Sendepuffer
-  38:main.c        **** 
-  39:main.c        **** void put_string(char *daten) {
-  40:main.c        ****    if (uart_tx_flag == 1) {
-  41:main.c        ****       strcpy(uart_tx_buffer, daten);      
-  42:main.c        ****       uart_tx_flag = 0;                    
-  43:main.c        ****       UCSRB |= (1<<UDRIE); 
-  44:main.c        ****    }
-  45:main.c        **** }
-  46:main.c        **** 
-  47:main.c        **** void get_string(char *daten) {
-  48:main.c        ****    if (uart_rx_flag==1) {
-  49:main.c        ****       strcpy(daten, uart_rx_buffer);
-  50:main.c        ****       uart_rx_flag = 0;
+  30:main.c        ****                 |
+  31:main.c        **** */
+  32:main.c        **** 
+  33:main.c        **** #define uart_buffer_size 256
+  34:main.c        **** 
+  35:main.c        **** #define STECKDOSENPIN 2
+  36:main.c        **** 
+  37:main.c        **** volatile uint8_t uart_rx_flag=0;            // Flag, String komplett empfangen
+  38:main.c        **** volatile uint8_t uart_tx_flag=1;            // Flag, String komplett gesendet
+  39:main.c        **** char uart_rx_buffer[uart_buffer_size];      // Empfangspuffer
+  40:main.c        **** char uart_tx_buffer[uart_buffer_size];      // Sendepuffer
+  41:main.c        **** 
+  42:main.c        **** int nRepeatTransmit = 10; // wie oft soll sendung an steckdose wiederholt werden
+  43:main.c        **** int nProtocol = 1;
+  44:main.c        **** int nPulseLength = 350;
+  45:main.c        **** 
+  46:main.c        **** void put_string(char *daten) {
+  47:main.c        ****    if (uart_tx_flag == 1) {
+  48:main.c        ****       strcpy(uart_tx_buffer, daten);      
+  49:main.c        ****       uart_tx_flag = 0;                    
+  50:main.c        ****       UCSRB |= (1<<UDRIE); 
   51:main.c        ****    }
   52:main.c        **** }
   53:main.c        **** 
-  54:main.c        **** void send_ok(){
-  55:main.c        **** 	char message[4];
-  56:main.c        **** 	message[0] = 'O';
-  57:main.c        **** 	message[1] = 'K';
-  58:main.c        **** 	message[2] = '\n';
-  59:main.c        **** 	message[3] = '\r';
-  60:main.c        **** 	put_string(message);
-  61:main.c        **** }
-  62:main.c        **** 
-  63:main.c        **** int adc2res(int adcValue){
+  54:main.c        **** void get_string(char *daten) {
+  55:main.c        ****    if (uart_rx_flag==1) {
+  56:main.c        ****       strcpy(daten, uart_rx_buffer);
+  57:main.c        ****       uart_rx_flag = 0;
+  58:main.c        ****    }
+  59:main.c        **** }
+  60:main.c        **** 
+  61:main.c        **** void send_ok(void){
+  62:main.c        **** 	char message[4];
+  63:main.c        **** 	message[0] = 'O';
+  64:main.c        **** 	message[1] = 'K';
+  65:main.c        **** 	message[2] = '\n';
+  66:main.c        **** 	message[3] = '\r';
+  67:main.c        **** 	put_string(message);
+  68:main.c        **** }
+  69:main.c        **** 
+  70:main.c        **** int adc2res(int adcValue){
   94               	.LM0:
   95               	.LFBB1:
   96 0000 EF92      		push r14
@@ -80,8 +87,8 @@
   99 0006 1F93      		push r17
  100               	/* prologue: function */
  101               	/* frame size = 0 */
-  64:main.c        **** 	int resistance;
-  65:main.c        **** 	double adcVoltage = adcValue * 2.56f / 1023.0f;
+  71:main.c        **** 	int resistance;
+  72:main.c        **** 	double adcVoltage = adcValue * 2.56f / 1023.0f;
  103               	.LM1:
  104 0008 AA27      		clr r26
  105 000a 97FD      		sbrc r25,7
@@ -120,9 +127,9 @@
  138 004c 54E4      		ldi r21,hhi8(0x447a0000)
  139 004e 00D0      		rcall __mulsf3
  140 0050 00D0      		rcall __fixsfsi
-  66:main.c        **** 	resistance = R_PC0 * (adcVoltage / (3.3f - adcVoltage));
-  67:main.c        **** 	return resistance;
-  68:main.c        **** }
+  73:main.c        **** 	resistance = R_PC0 * (adcVoltage / (3.3f - adcVoltage));
+  74:main.c        **** 	return resistance;
+  75:main.c        **** }
  142               	.LM2:
  143 0052 CB01      		movw r24,r22
  144               	/* epilogue start */
@@ -134,9 +141,9 @@
  151               	.Lscope1:
  154               	.global	res2temp
  156               	res2temp:
-  69:main.c        **** 
-  70:main.c        **** 
-  71:main.c        **** double res2temp(int res){
+  76:main.c        **** 
+  77:main.c        **** 
+  78:main.c        **** double res2temp(int res){
  158               	.LM3:
  159               	.LFBB2:
  160               	/* prologue: function */
@@ -160,238 +167,168 @@
  179 007c 50E4      		ldi r21,hhi8(0x40f00000)
  180 007e 00D0      		rcall __divsf3
  181               	/* epilogue start */
-  72:main.c        **** 	return (res - 815.0f) / 7.5f;
-  73:main.c        **** }
+  79:main.c        **** 	return (res - 815.0f) / 7.5f;
+  80:main.c        **** }
  183               	.LM5:
  184 0080 0895      		ret
  186               	.Lscope2:
- 188               	.global	__vector_11
- 190               	__vector_11:
-  74:main.c        **** 
-  75:main.c        **** int main (void) {
-  76:main.c        ****     char stringbuffer[64];  // Allgemeiner Puffer für Strings
-  77:main.c        ****     uint8_t buffer_full=0;  // noch ein Flag, aber nur in der Hauptschleife
-  78:main.c        ****     char * charpointer;     // Hilfszeiger
-  79:main.c        **** 	int sampleValue = 0;
-  80:main.c        **** 
-  81:main.c        ****     // IO konfigurieren
-  82:main.c        ****     DDRB = 0xFF;
-  83:main.c        ****     DDRC = 0x00;
-  84:main.c        **** 	PORTC = 0x00;
-  85:main.c        ****     //DDRD = 0xFF;
-  86:main.c        ****     //DDRD = (DDRD|0x01);
-  87:main.c        **** 
-  88:main.c        **** 	ADMUX = 0x00;
-  89:main.c        **** 	ADMUX |= (1<<REFS1)| (1<<REFS0); // 0b01000000; // interne Ref-Spannung, avcc, pc0 als adc
-  90:main.c        **** 	ADCSRA |= (1<<ADEN) | (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);
-  91:main.c        **** 
-  92:main.c        **** 
-  93:main.c        ****     // Servo konfigurieren
-  94:main.c        ****     // Werte für OCR1A: zw. 650 und 1900!
-  95:main.c        ****     /*
-  96:main.c        ****     ICR1=10000;
-  97:main.c        ****     TCCR1A|=(0<<COM1A0)|(1<<COM1A1)|(0<<COM1B0)|(0<<COM1B1)|(0<<FOC1A)|(0<<FOC1B)|(1<<WGM11)|(0<<WG
-  98:main.c        ****     TCCR1B|=(0<<ICNC1)|(0<<ICES1)|(1<<WGM13)|(1<<WGM12)|(0<<CS12)|(1<<CS11)|(0<<CS10);
-  99:main.c        ****     OCR1A = 1300;
- 100:main.c        ****     */
- 101:main.c        **** 
- 102:main.c        ****     // UART konfigurieren
- 103:main.c        ****     UBRRH = UBRR_VAL >> 8;
- 104:main.c        ****     UBRRL = UBRR_VAL & 0xFF;
- 105:main.c        ****     UCSRB = (1<<RXCIE) | (1<<RXEN) | (1<<TXEN); 
- 106:main.c        **** 
- 107:main.c        ****     UCSRC = (1<<URSEL)|(1<<USBS)|(3<<UCSZ0);      //Asynchron 8N1
- 108:main.c        **** 
- 109:main.c        ****     // Stringpuffer initialisieren
- 110:main.c        ****     //stringbuffer[0] = '\n';
- 111:main.c        ****     //stringbuffer[1] = '\r';
- 112:main.c        **** 
- 113:main.c        ****     // Interrupts freigeben
- 114:main.c        ****     sei();
- 115:main.c        **** 
- 116:main.c        ****     while(1) {
- 117:main.c        **** 
- 118:main.c        **** 
- 119:main.c        ****         if (uart_rx_flag==1 && buffer_full==0) {
- 120:main.c        ****             get_string(stringbuffer);
- 121:main.c        ****             buffer_full=1;
- 122:main.c        ****         }
- 123:main.c        **** 
- 124:main.c        **** 	/*
- 125:main.c        **** 	 * zum testen, falls "S1" gesendet wurde,
- 126:main.c        **** 	 * schalte Pin C0 ein
- 127:main.c        **** 	 */
- 128:main.c        **** 	if(stringbuffer[0] == 'S'){
- 129:main.c        **** 		if(stringbuffer[1] == '1'){
- 130:main.c        **** 			PORTC |= (1<<5);
- 131:main.c        **** 			send_ok();
- 132:main.c        **** 			// put other char in there to not trigger it again
- 133:main.c        **** 			stringbuffer[0] = 'N';
- 134:main.c        **** 			buffer_full = 0;
- 135:main.c        **** 		}	
- 136:main.c        **** 	}else if(stringbuffer[0] == 'U'){
- 137:main.c        **** 		if(stringbuffer[1] == '1'){
- 138:main.c        **** 			PORTC &= ~(1<<5);
- 139:main.c        **** 			send_ok();
- 140:main.c        **** 			stringbuffer[0] = 'N';
- 141:main.c        **** 			buffer_full = 0;
- 142:main.c        **** 		}
- 143:main.c        **** 	}else if(stringbuffer[0] == 'G'){ // adc wert anfordern
- 144:main.c        **** 		ADCSRA |= (1<<ADSC);  //single conversion mode ein
- 145:main.c        **** 		while(ADCSRA & (1<<ADSC));  //warten bis konvertierung abgeschlosen
- 146:main.c        **** 		sampleValue = ADCW;
- 147:main.c        **** 		dtostrf( res2temp(adc2res(sampleValue)), 5, 2, stringbuffer );
- 148:main.c        **** 		strcat(stringbuffer, "\n\r");
- 149:main.c        **** 		_delay_ms(100);
- 150:main.c        **** 		put_string(stringbuffer);
- 151:main.c        **** 		buffer_full = 0;
- 152:main.c        **** 	}else{
- 153:main.c        **** 		_delay_ms(10);
- 154:main.c        **** 
- 155:main.c        **** 	        if (uart_tx_flag==1 && buffer_full==1) {
- 156:main.c        **** 	            strcat(stringbuffer, "\n\r");
- 157:main.c        **** 	            put_string(stringbuffer); // zurücksenden
- 158:main.c        **** 	            buffer_full=0; // Buffer ist wieder verfügbar
- 159:main.c        **** 	        }
- 160:main.c        **** 	}
- 161:main.c        ****     }
- 162:main.c        **** }
- 163:main.c        **** 
- 164:main.c        **** ISR(USART_RXC_vect) {
- 192               	.LM6:
- 193               	.LFBB3:
- 194 0082 1F92      		push __zero_reg__
- 195 0084 0F92      		push r0
- 196 0086 0FB6      		in r0,__SREG__
- 197 0088 0F92      		push r0
- 198 008a 1124      		clr __zero_reg__
- 199 008c 8F93      		push r24
- 200 008e 9F93      		push r25
- 201 0090 EF93      		push r30
- 202 0092 FF93      		push r31
- 203               	/* prologue: Signal */
- 204               	/* frame size = 0 */
- 165:main.c        ****     static uint8_t uart_rx_cnt=0;     // Zähler für empfangene Zeichen
- 166:main.c        ****     uint8_t data;
- 167:main.c        **** 
- 168:main.c        ****     data = UDR;
+ 190               	.global	dec2binWzerofill
+ 192               	dec2binWzerofill:
+  81:main.c        **** 
+  82:main.c        **** char* dec2binWzerofill(unsigned long Dec, unsigned int bitLength){
+ 194               	.LM6:
+ 195               	.LFBB3:
+ 196 0082 0F93      		push r16
+ 197 0084 1F93      		push r17
+ 198 0086 CF93      		push r28
+ 199 0088 DF93      		push r29
+ 200               	/* prologue: function */
+ 201               	/* frame size = 0 */
+ 202 008a 8B01      		movw r16,r22
+ 203 008c 9C01      		movw r18,r24
+ 204 008e EA01      		movw r28,r20
  206               	.LM7:
- 207 0094 9CB1      		in r25,44-32
- 169:main.c        **** 
- 170:main.c        ****     if (!uart_rx_flag) {
- 209               	.LM8:
- 210 0096 8091 0000 		lds r24,uart_rx_flag
- 211 009a 8823      		tst r24
- 212 009c 01F4      		brne .L8
- 213 009e 8091 0000 		lds r24,uart_rx_cnt.1709
- 171:main.c        ****         if (data == '\r') {
- 215               	.LM9:
- 216 00a2 9D30      		cpi r25,lo8(13)
- 217 00a4 01F4      		brne .L7
- 172:main.c        ****             uart_rx_buffer[uart_rx_cnt]=0;
- 219               	.LM10:
- 220 00a6 E82F      		mov r30,r24
- 221 00a8 F0E0      		ldi r31,lo8(0)
- 222 00aa E050      		subi r30,lo8(-(uart_rx_buffer))
- 223 00ac F040      		sbci r31,hi8(-(uart_rx_buffer))
- 224 00ae 1082      		st Z,__zero_reg__
- 173:main.c        ****             uart_rx_flag=1;
- 226               	.LM11:
- 227 00b0 81E0      		ldi r24,lo8(1)
- 228 00b2 8093 0000 		sts uart_rx_flag,r24
- 174:main.c        ****             uart_rx_cnt=0;
- 230               	.LM12:
- 231 00b6 1092 0000 		sts uart_rx_cnt.1709,__zero_reg__
- 232 00ba 00C0      		rjmp .L8
- 233               	.L7:
- 175:main.c        ****         }else if (uart_rx_cnt<(uart_buffer_size-1)) {
- 235               	.LM13:
- 236 00bc 8F3F      		cpi r24,lo8(-1)
- 237 00be 01F0      		breq .L8
- 176:main.c        ****             uart_rx_buffer[uart_rx_cnt]=data;
- 239               	.LM14:
- 240 00c0 E82F      		mov r30,r24
- 241 00c2 F0E0      		ldi r31,lo8(0)
- 242 00c4 E050      		subi r30,lo8(-(uart_rx_buffer))
- 243 00c6 F040      		sbci r31,hi8(-(uart_rx_buffer))
- 244 00c8 9083      		st Z,r25
- 177:main.c        ****             uart_rx_cnt++; // Zähler erhöhen
- 246               	.LM15:
- 247 00ca 8F5F      		subi r24,lo8(-(1))
- 248 00cc 8093 0000 		sts uart_rx_cnt.1709,r24
- 249               	.L8:
- 250               	/* epilogue start */
- 178:main.c        ****         }
- 179:main.c        ****     }
- 180:main.c        **** }
- 252               	.LM16:
- 253 00d0 FF91      		pop r31
- 254 00d2 EF91      		pop r30
- 255 00d4 9F91      		pop r25
- 256 00d6 8F91      		pop r24
- 257 00d8 0F90      		pop r0
- 258 00da 0FBE      		out __SREG__,r0
- 259 00dc 0F90      		pop r0
- 260 00de 1F90      		pop __zero_reg__
- 261 00e0 1895      		reti
- 267               	.Lscope3:
- 269               	.global	__vector_12
- 271               	__vector_12:
- 181:main.c        **** 
- 182:main.c        **** 
- 183:main.c        **** ISR(USART_UDRE_vect) {
- 273               	.LM17:
- 274               	.LFBB4:
- 275 00e2 1F92      		push __zero_reg__
- 276 00e4 0F92      		push r0
- 277 00e6 0FB6      		in r0,__SREG__
- 278 00e8 0F92      		push r0
- 279 00ea 1124      		clr __zero_reg__
- 280 00ec 8F93      		push r24
- 281 00ee 9F93      		push r25
- 282 00f0 EF93      		push r30
- 283 00f2 FF93      		push r31
- 284               	/* prologue: Signal */
- 285               	/* frame size = 0 */
- 184:main.c        ****     static char* uart_tx_p = uart_tx_buffer;    
- 185:main.c        ****     uint8_t data;
- 186:main.c        **** 
- 187:main.c        ****     data = *uart_tx_p++;
- 287               	.LM18:
- 288 00f4 E091 0000 		lds r30,uart_tx_p.1721
- 289 00f8 F091 0000 		lds r31,(uart_tx_p.1721)+1
- 290 00fc 8191      		ld r24,Z+
- 291 00fe F093 0000 		sts (uart_tx_p.1721)+1,r31
- 292 0102 E093 0000 		sts uart_tx_p.1721,r30
- 188:main.c        **** 
- 189:main.c        ****     if (data == 0 ) {
- 294               	.LM19:
- 295 0106 8823      		tst r24
- 296 0108 01F4      		brne .L10
- 190:main.c        ****         UCSRB &= ~(1<<UDRIE);       // ja, dann UDRE Interrupt ausschalten
- 298               	.LM20:
- 299 010a 5598      		cbi 42-32,5
- 191:main.c        ****         uart_tx_p = uart_tx_buffer; // Pointer zurücksetzen
- 301               	.LM21:
- 302 010c 80E0      		ldi r24,lo8(uart_tx_buffer)
- 303 010e 90E0      		ldi r25,hi8(uart_tx_buffer)
- 304 0110 9093 0000 		sts (uart_tx_p.1721)+1,r25
- 305 0114 8093 0000 		sts uart_tx_p.1721,r24
- 192:main.c        ****         uart_tx_flag = 1;           // Flag setzen, Übertragung beeendet
- 307               	.LM22:
- 308 0118 81E0      		ldi r24,lo8(1)
- 309 011a 8093 0000 		sts uart_tx_flag,r24
- 310 011e 00C0      		rjmp .L12
- 311               	.L10:
- 193:main.c        ****     }else{
- 194:main.c        **** 	 UDR = data;                // nein, Daten senden
- 313               	.LM23:
- 314 0120 8CB9      		out 44-32,r24
- 315               	.LBB24:
- 316               	.LBB25:
- 317               	.LBB26:
- 318               	.LBB27:
- 320               	.Ltext1:
+ 207 0090 E0E0      		ldi r30,lo8(bin.1671+32)
+ 208 0092 F0E0      		ldi r31,hi8(bin.1671+32)
+ 209 0094 40E0      		ldi r20,lo8(0)
+ 210 0096 50E0      		ldi r21,hi8(0)
+ 211 0098 00C0      		rjmp .L6
+ 212               	.L9:
+  83:main.c        ****   static char bin[64];
+  84:main.c        ****   unsigned int i=0;
+  85:main.c        **** 
+  86:main.c        ****   while (Dec > 0) {
+  87:main.c        ****     bin[32+i++] = ((Dec & 1) > 0) ? '1' : '0';
+ 214               	.LM8:
+ 215 009a C801      		movw r24,r16
+ 216 009c 8170      		andi r24,lo8(1)
+ 217 009e 9070      		andi r25,hi8(1)
+ 218 00a0 892B      		or r24,r25
+ 219 00a2 01F4      		brne .L7
+ 220 00a4 80E3      		ldi r24,lo8(48)
+ 221 00a6 00C0      		rjmp .L8
+ 222               	.L7:
+ 223 00a8 81E3      		ldi r24,lo8(49)
+ 224               	.L8:
+ 225 00aa 8193      		st Z+,r24
+ 226 00ac 4F5F      		subi r20,lo8(-(1))
+ 227 00ae 5F4F      		sbci r21,hi8(-(1))
+  88:main.c        ****     Dec = Dec >> 1;
+ 229               	.LM9:
+ 230 00b0 3695      		lsr r19
+ 231 00b2 2795      		ror r18
+ 232 00b4 1795      		ror r17
+ 233 00b6 0795      		ror r16
+ 234               	.L6:
+  86:main.c        ****   while (Dec > 0) {
+ 236               	.LM10:
+ 237 00b8 0115      		cp r16,__zero_reg__
+ 238 00ba 1105      		cpc r17,__zero_reg__
+ 239 00bc 2105      		cpc r18,__zero_reg__
+ 240 00be 3105      		cpc r19,__zero_reg__
+ 241 00c0 01F4      		brne .L9
+  82:main.c        **** char* dec2binWzerofill(unsigned long Dec, unsigned int bitLength){
+ 243               	.LM11:
+ 244 00c2 CE01      		movw r24,r28
+ 245 00c4 841B      		sub r24,r20
+ 246 00c6 950B      		sbc r25,r21
+ 247 00c8 AC01      		movw r20,r24
+ 248 00ca DE01      		movw r26,r28
+ 249 00cc A050      		subi r26,lo8(-(bin.1671+31))
+ 250 00ce B040      		sbci r27,hi8(-(bin.1671+31))
+ 251 00d0 E0E0      		ldi r30,lo8(bin.1671)
+ 252 00d2 F0E0      		ldi r31,hi8(bin.1671)
+ 253 00d4 20E0      		ldi r18,lo8(0)
+ 254 00d6 30E0      		ldi r19,hi8(0)
+ 255               	.LBB76:
+  89:main.c        ****   }
+  90:main.c        **** 
+  91:main.c        ****   for (unsigned int j = 0; j< bitLength; j++) {
+  92:main.c        ****     if (j >= bitLength - i) {
+  93:main.c        ****       bin[j] = bin[ 31 + i - (j - (bitLength - i)) ];
+  94:main.c        ****     }else {
+  95:main.c        ****       bin[j] = '0';
+ 257               	.LM12:
+ 258 00d8 90E3      		ldi r25,lo8(48)
+ 259 00da 00C0      		rjmp .L10
+ 260               	.L13:
+  92:main.c        ****     if (j >= bitLength - i) {
+ 262               	.LM13:
+ 263 00dc 2417      		cp r18,r20
+ 264 00de 3507      		cpc r19,r21
+ 265 00e0 00F0      		brlo .L11
+  93:main.c        ****       bin[j] = bin[ 31 + i - (j - (bitLength - i)) ];
+ 267               	.LM14:
+ 268 00e2 8C91      		ld r24,X
+ 269 00e4 8083      		st Z,r24
+ 270 00e6 00C0      		rjmp .L12
+ 271               	.L11:
+ 273               	.LM15:
+ 274 00e8 9083      		st Z,r25
+ 275               	.L12:
+  91:main.c        ****   for (unsigned int j = 0; j< bitLength; j++) {
+ 277               	.LM16:
+ 278 00ea 2F5F      		subi r18,lo8(-(1))
+ 279 00ec 3F4F      		sbci r19,hi8(-(1))
+ 280 00ee 1197      		sbiw r26,1
+ 281 00f0 3196      		adiw r30,1
+ 282               	.L10:
+ 283 00f2 2C17      		cp r18,r28
+ 284 00f4 3D07      		cpc r19,r29
+ 285 00f6 00F0      		brlo .L13
+ 286               	.LBE76:
+  96:main.c        ****     }
+  97:main.c        ****   }
+  98:main.c        ****   bin[bitLength] = '\0';
+ 288               	.LM17:
+ 289 00f8 C050      		subi r28,lo8(-(bin.1671))
+ 290 00fa D040      		sbci r29,hi8(-(bin.1671))
+ 291 00fc 1882      		st Y,__zero_reg__
+  99:main.c        ****   
+ 100:main.c        ****   return bin;
+ 101:main.c        **** }
+ 293               	.LM18:
+ 294 00fe 80E0      		ldi r24,lo8(bin.1671)
+ 295 0100 90E0      		ldi r25,hi8(bin.1671)
+ 296               	/* epilogue start */
+ 297 0102 DF91      		pop r29
+ 298 0104 CF91      		pop r28
+ 299 0106 1F91      		pop r17
+ 300 0108 0F91      		pop r16
+ 301 010a 0895      		ret
+ 310               	.Lscope3:
+ 314               	.global	transmit
+ 316               	transmit:
+ 102:main.c        **** 
+ 103:main.c        **** void transmit(int nHighPulses, int nLowPulses){
+ 318               	.LM19:
+ 319               	.LFBB4:
+ 320               	/* prologue: function */
+ 321               	/* frame size = 0 */
+ 104:main.c        ****     int tmpDelay;
+ 105:main.c        ****     // set Output pin to high
+ 106:main.c        ****     PORTD |= (1<<STECKDOSENPIN);
+ 323               	.LM20:
+ 324 010c 929A      		sbi 50-32,2
+ 107:main.c        **** 
+ 108:main.c        ****     for(tmpDelay=0;tmpDelay < nPulseLength*nHighPulses;tmpDelay++){
+ 326               	.LM21:
+ 327 010e 4091 0000 		lds r20,nPulseLength
+ 328 0112 5091 0000 		lds r21,(nPulseLength)+1
+ 329 0116 849F      		mul r24,r20
+ 330 0118 F001      		movw r30,r0
+ 331 011a 859F      		mul r24,r21
+ 332 011c F00D      		add r31,r0
+ 333 011e 949F      		mul r25,r20
+ 334 0120 F00D      		add r31,r0
+ 335 0122 1124      		clr r1
+ 336 0124 80E0      		ldi r24,lo8(0)
+ 337 0126 90E0      		ldi r25,hi8(0)
+ 338               	.LBB77:
+ 339               	.LBB78:
+ 340               	.LBB79:
+ 341               	.LBB80:
+ 343               	.Ltext1:
    1:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h **** /* Copyright (c) 2002, Marek Michalkiewicz
    2:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h ****    Copyright (c) 2007 Joerg Wunsch
    3:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h ****    All rights reserved.
@@ -475,6 +412,860 @@
   81:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h **** _delay_loop_1(uint8_t __count)
   82:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h **** {
   83:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h **** 	__asm__ volatile (
+ 345               	.LM22:
+ 346 0128 32E0      		ldi r19,lo8(2)
+ 347 012a 00C0      		rjmp .L16
+ 348               	.L17:
+ 349 012c 232F      		mov r18,r19
+ 350               	/* #APP */
+ 351               	 ;  83 "/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h" 1
+ 352 012e 2A95      		1: dec r18
+ 353 0130 01F4      		brne 1b
+ 354               	 ;  0 "" 2
+ 355               	/* #NOAPP */
+ 356               	.LBE80:
+ 357               	.LBE79:
+ 358               	.LBE78:
+ 359               	.LBE77:
+ 361               	.Ltext2:
+ 363               	.LM23:
+ 364 0132 0196      		adiw r24,1
+ 365               	.L16:
+ 366 0134 8E17      		cp r24,r30
+ 367 0136 9F07      		cpc r25,r31
+ 368 0138 04F0      		brlt .L17
+ 109:main.c        ****         _delay_us(1);
+ 110:main.c        ****     }
+ 111:main.c        **** 
+ 112:main.c        ****     PORTD &= ~(1<<STECKDOSENPIN);
+ 370               	.LM24:
+ 371 013a 9298      		cbi 50-32,2
+ 113:main.c        **** 
+ 114:main.c        ****     for(tmpDelay=0;tmpDelay < nPulseLength*nLowPulses;tmpDelay++){
+ 373               	.LM25:
+ 374 013c 469F      		mul r20,r22
+ 375 013e F001      		movw r30,r0
+ 376 0140 479F      		mul r20,r23
+ 377 0142 F00D      		add r31,r0
+ 378 0144 569F      		mul r21,r22
+ 379 0146 F00D      		add r31,r0
+ 380 0148 1124      		clr r1
+ 381 014a 80E0      		ldi r24,lo8(0)
+ 382 014c 90E0      		ldi r25,hi8(0)
+ 383               	.LBB81:
+ 384               	.LBB82:
+ 385               	.LBB83:
+ 386               	.LBB84:
+ 388               	.Ltext3:
+ 390               	.LM26:
+ 391 014e 32E0      		ldi r19,lo8(2)
+ 392 0150 00C0      		rjmp .L18
+ 393               	.L19:
+ 394 0152 232F      		mov r18,r19
+ 395               	/* #APP */
+ 396               	 ;  83 "/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h" 1
+ 397 0154 2A95      		1: dec r18
+ 398 0156 01F4      		brne 1b
+ 399               	 ;  0 "" 2
+ 400               	/* #NOAPP */
+ 401               	.LBE84:
+ 402               	.LBE83:
+ 403               	.LBE82:
+ 404               	.LBE81:
+ 406               	.Ltext4:
+ 408               	.LM27:
+ 409 0158 0196      		adiw r24,1
+ 410               	.L18:
+ 411 015a 8E17      		cp r24,r30
+ 412 015c 9F07      		cpc r25,r31
+ 413 015e 04F0      		brlt .L19
+ 414               	/* epilogue start */
+ 115:main.c        ****         _delay_us(1);
+ 116:main.c        ****     }
+ 117:main.c        **** 
+ 118:main.c        **** }
+ 416               	.LM28:
+ 417 0160 0895      		ret
+ 422               	.Lscope4:
+ 424               	.global	send0
+ 426               	send0:
+ 119:main.c        **** 
+ 120:main.c        **** void send0(void){
+ 428               	.LM29:
+ 429               	.LFBB5:
+ 430               	/* prologue: function */
+ 431               	/* frame size = 0 */
+ 121:main.c        **** 	if(nProtocol == 1) transmit(1,3);
+ 433               	.LM30:
+ 434 0162 8091 0000 		lds r24,nProtocol
+ 435 0166 9091 0000 		lds r25,(nProtocol)+1
+ 436 016a 0197      		sbiw r24,1
+ 437 016c 01F4      		brne .L22
+ 438 016e 81E0      		ldi r24,lo8(1)
+ 439 0170 90E0      		ldi r25,hi8(1)
+ 440 0172 63E0      		ldi r22,lo8(3)
+ 441 0174 70E0      		ldi r23,hi8(3)
+ 442 0176 00D0      		rcall transmit
+ 443               	.L22:
+ 122:main.c        **** 	if(nProtocol == 2) transmit(1,2);
+ 445               	.LM31:
+ 446 0178 8091 0000 		lds r24,nProtocol
+ 447 017c 9091 0000 		lds r25,(nProtocol)+1
+ 448 0180 0297      		sbiw r24,2
+ 449 0182 01F4      		brne .L24
+ 450 0184 81E0      		ldi r24,lo8(1)
+ 451 0186 90E0      		ldi r25,hi8(1)
+ 452 0188 62E0      		ldi r22,lo8(2)
+ 453 018a 70E0      		ldi r23,hi8(2)
+ 454 018c 00D0      		rcall transmit
+ 455               	.L24:
+ 456 018e 0895      		ret
+ 458               	.Lscope5:
+ 460               	.global	send1
+ 462               	send1:
+ 123:main.c        **** }
+ 124:main.c        **** 
+ 125:main.c        **** void send1(void){
+ 464               	.LM32:
+ 465               	.LFBB6:
+ 466               	/* prologue: function */
+ 467               	/* frame size = 0 */
+ 126:main.c        **** 	if(nProtocol == 1) transmit(3,1);
+ 469               	.LM33:
+ 470 0190 8091 0000 		lds r24,nProtocol
+ 471 0194 9091 0000 		lds r25,(nProtocol)+1
+ 472 0198 0197      		sbiw r24,1
+ 473 019a 01F4      		brne .L26
+ 474 019c 83E0      		ldi r24,lo8(3)
+ 475 019e 90E0      		ldi r25,hi8(3)
+ 476 01a0 61E0      		ldi r22,lo8(1)
+ 477 01a2 70E0      		ldi r23,hi8(1)
+ 478 01a4 00D0      		rcall transmit
+ 479               	.L26:
+ 127:main.c        **** 	if(nProtocol == 2) transmit(2,1);
+ 481               	.LM34:
+ 482 01a6 8091 0000 		lds r24,nProtocol
+ 483 01aa 9091 0000 		lds r25,(nProtocol)+1
+ 484 01ae 0297      		sbiw r24,2
+ 485 01b0 01F4      		brne .L28
+ 486 01b2 82E0      		ldi r24,lo8(2)
+ 487 01b4 90E0      		ldi r25,hi8(2)
+ 488 01b6 61E0      		ldi r22,lo8(1)
+ 489 01b8 70E0      		ldi r23,hi8(1)
+ 490 01ba 00D0      		rcall transmit
+ 491               	.L28:
+ 492 01bc 0895      		ret
+ 494               	.Lscope6:
+ 496               	.global	sendT0
+ 498               	sendT0:
+ 128:main.c        **** }
+ 129:main.c        **** 
+ 130:main.c        **** void sendT0(void){
+ 500               	.LM35:
+ 501               	.LFBB7:
+ 502               	/* prologue: function */
+ 503               	/* frame size = 0 */
+ 131:main.c        ****     transmit(1,3);
+ 505               	.LM36:
+ 506 01be 81E0      		ldi r24,lo8(1)
+ 507 01c0 90E0      		ldi r25,hi8(1)
+ 508 01c2 63E0      		ldi r22,lo8(3)
+ 509 01c4 70E0      		ldi r23,hi8(3)
+ 510 01c6 00D0      		rcall transmit
+ 132:main.c        ****     transmit(1,3);
+ 512               	.LM37:
+ 513 01c8 81E0      		ldi r24,lo8(1)
+ 514 01ca 90E0      		ldi r25,hi8(1)
+ 515 01cc 63E0      		ldi r22,lo8(3)
+ 516 01ce 70E0      		ldi r23,hi8(3)
+ 517 01d0 00D0      		rcall transmit
+ 518               	/* epilogue start */
+ 133:main.c        **** }
+ 520               	.LM38:
+ 521 01d2 0895      		ret
+ 523               	.Lscope7:
+ 525               	.global	sendT1
+ 527               	sendT1:
+ 134:main.c        **** 
+ 135:main.c        **** void sendT1(void){
+ 529               	.LM39:
+ 530               	.LFBB8:
+ 531               	/* prologue: function */
+ 532               	/* frame size = 0 */
+ 136:main.c        **** 	transmit(3,1);
+ 534               	.LM40:
+ 535 01d4 83E0      		ldi r24,lo8(3)
+ 536 01d6 90E0      		ldi r25,hi8(3)
+ 537 01d8 61E0      		ldi r22,lo8(1)
+ 538 01da 70E0      		ldi r23,hi8(1)
+ 539 01dc 00D0      		rcall transmit
+ 137:main.c        **** 	transmit(3,1);
+ 541               	.LM41:
+ 542 01de 83E0      		ldi r24,lo8(3)
+ 543 01e0 90E0      		ldi r25,hi8(3)
+ 544 01e2 61E0      		ldi r22,lo8(1)
+ 545 01e4 70E0      		ldi r23,hi8(1)
+ 546 01e6 00D0      		rcall transmit
+ 547               	/* epilogue start */
+ 138:main.c        **** }
+ 549               	.LM42:
+ 550 01e8 0895      		ret
+ 552               	.Lscope8:
+ 554               	.global	sendTF
+ 556               	sendTF:
+ 139:main.c        **** 
+ 140:main.c        **** void sendTF(void){
+ 558               	.LM43:
+ 559               	.LFBB9:
+ 560               	/* prologue: function */
+ 561               	/* frame size = 0 */
+ 141:main.c        **** 	transmit(1,3);
+ 563               	.LM44:
+ 564 01ea 81E0      		ldi r24,lo8(1)
+ 565 01ec 90E0      		ldi r25,hi8(1)
+ 566 01ee 63E0      		ldi r22,lo8(3)
+ 567 01f0 70E0      		ldi r23,hi8(3)
+ 568 01f2 00D0      		rcall transmit
+ 142:main.c        **** 	transmit(3,1);
+ 570               	.LM45:
+ 571 01f4 83E0      		ldi r24,lo8(3)
+ 572 01f6 90E0      		ldi r25,hi8(3)
+ 573 01f8 61E0      		ldi r22,lo8(1)
+ 574 01fa 70E0      		ldi r23,hi8(1)
+ 575 01fc 00D0      		rcall transmit
+ 576               	/* epilogue start */
+ 143:main.c        **** }
+ 578               	.LM46:
+ 579 01fe 0895      		ret
+ 581               	.Lscope9:
+ 583               	.global	sendSync
+ 585               	sendSync:
+ 144:main.c        **** 
+ 145:main.c        **** void sendSync(void){
+ 587               	.LM47:
+ 588               	.LFBB10:
+ 589               	/* prologue: function */
+ 590               	/* frame size = 0 */
+ 146:main.c        **** 	if(nProtocol == 1) transmit(1,31);
+ 592               	.LM48:
+ 593 0200 8091 0000 		lds r24,nProtocol
+ 594 0204 9091 0000 		lds r25,(nProtocol)+1
+ 595 0208 0197      		sbiw r24,1
+ 596 020a 01F4      		brne .L36
+ 597 020c 81E0      		ldi r24,lo8(1)
+ 598 020e 90E0      		ldi r25,hi8(1)
+ 599 0210 6FE1      		ldi r22,lo8(31)
+ 600 0212 70E0      		ldi r23,hi8(31)
+ 601 0214 00D0      		rcall transmit
+ 602               	.L36:
+ 147:main.c        **** 	if(nProtocol == 2) transmit(1,10);
+ 604               	.LM49:
+ 605 0216 8091 0000 		lds r24,nProtocol
+ 606 021a 9091 0000 		lds r25,(nProtocol)+1
+ 607 021e 0297      		sbiw r24,2
+ 608 0220 01F4      		brne .L38
+ 609 0222 81E0      		ldi r24,lo8(1)
+ 610 0224 90E0      		ldi r25,hi8(1)
+ 611 0226 6AE0      		ldi r22,lo8(10)
+ 612 0228 70E0      		ldi r23,hi8(10)
+ 613 022a 00D0      		rcall transmit
+ 614               	.L38:
+ 615 022c 0895      		ret
+ 617               	.Lscope10:
+ 621               	.global	getCodeWordA
+ 623               	getCodeWordA:
+ 148:main.c        **** }
+ 149:main.c        **** 
+ 150:main.c        **** char* getCodeWordA(char* sGroup, int nChannelCode, bool bStatus) {
+ 625               	.LM50:
+ 626               	.LFBB11:
+ 627 022e 0F93      		push r16
+ 628 0230 1F93      		push r17
+ 629 0232 DF93      		push r29
+ 630 0234 CF93      		push r28
+ 631 0236 CDB7      		in r28,__SP_L__
+ 632 0238 DEB7      		in r29,__SP_H__
+ 633 023a 2C97      		sbiw r28,12
+ 634 023c 0FB6      		in __tmp_reg__,__SREG__
+ 635 023e F894      		cli
+ 636 0240 DEBF      		out __SP_H__,r29
+ 637 0242 0FBE      		out __SREG__,__tmp_reg__
+ 638 0244 CDBF      		out __SP_L__,r28
+ 639               	/* prologue: function */
+ 640               	/* frame size = 12 */
+ 641 0246 9C01      		movw r18,r24
+ 642 0248 042F      		mov r16,r20
+ 151:main.c        ****    int nReturnPos = 0;
+ 152:main.c        ****    static char sReturn[13];
+ 153:main.c        **** 
+ 154:main.c        ****   char* code[6] = { "FFFFF", "0FFFF", "F0FFF", "FF0FF", "FFF0F", "FFFF0" };
+ 644               	.LM51:
+ 645 024a FE01      		movw r30,r28
+ 646 024c 3196      		adiw r30,1
+ 647 024e A0E0      		ldi r26,lo8(C.9.1749)
+ 648 0250 B0E0      		ldi r27,hi8(C.9.1749)
+ 649 0252 8CE0      		ldi r24,lo8(12)
+ 650               	.L40:
+ 651 0254 0D90      		ld r0,X+
+ 652 0256 0192      		st Z+,r0
+ 653 0258 8150      		subi r24,lo8(-(-1))
+ 654 025a 01F4      		brne .L40
+ 155:main.c        **** 
+ 156:main.c        ****   if (nChannelCode < 1 || nChannelCode > 5) {
+ 656               	.LM52:
+ 657 025c CB01      		movw r24,r22
+ 658 025e 0197      		sbiw r24,1
+ 659 0260 0597      		sbiw r24,5
+ 660 0262 00F0      		brlo .+2
+ 661 0264 00C0      		rjmp .L41
+ 662 0266 E0E0      		ldi r30,lo8(sReturn.1739)
+ 663 0268 F0E0      		ldi r31,hi8(sReturn.1739)
+ 664 026a 81E0      		ldi r24,lo8(1)
+ 665 026c 90E0      		ldi r25,hi8(1)
+ 666               	.LBB85:
+ 157:main.c        ****       return '\0';
+ 158:main.c        ****   }
+ 159:main.c        ****   
+ 160:main.c        ****   for (int i = 0; i<5; i++) {
+ 161:main.c        ****     if (sGroup[i] == '0') {
+ 162:main.c        ****       sReturn[nReturnPos++] = 'F';
+ 163:main.c        ****     } else if (sGroup[i] == '1') {
+ 164:main.c        ****       sReturn[nReturnPos++] = '0';
+ 668               	.LM53:
+ 669 026e 10E3      		ldi r17,lo8(48)
+ 162:main.c        ****       sReturn[nReturnPos++] = 'F';
+ 671               	.LM54:
+ 672 0270 46E4      		ldi r20,lo8(70)
+ 673               	.L44:
+ 161:main.c        ****     if (sGroup[i] == '0') {
+ 675               	.LM55:
+ 676 0272 D901      		movw r26,r18
+ 677 0274 5C91      		ld r21,X
+ 678 0276 5033      		cpi r21,lo8(48)
+ 679 0278 01F4      		brne .L42
+ 162:main.c        ****       sReturn[nReturnPos++] = 'F';
+ 681               	.LM56:
+ 682 027a 4083      		st Z,r20
+ 683 027c 00C0      		rjmp .L53
+ 684               	.L42:
+ 163:main.c        ****     } else if (sGroup[i] == '1') {
+ 686               	.LM57:
+ 687 027e 5133      		cpi r21,lo8(49)
+ 688 0280 01F0      		breq .+2
+ 689 0282 00C0      		rjmp .L41
+ 691               	.LM58:
+ 692 0284 1083      		st Z,r17
+ 693               	.L53:
+ 694 0286 DC01      		movw r26,r24
+ 695 0288 0196      		adiw r24,1
+ 696 028a 2F5F      		subi r18,lo8(-(1))
+ 697 028c 3F4F      		sbci r19,hi8(-(1))
+ 698 028e 3196      		adiw r30,1
+ 160:main.c        ****   for (int i = 0; i<5; i++) {
+ 700               	.LM59:
+ 701 0290 8630      		cpi r24,6
+ 702 0292 9105      		cpc r25,__zero_reg__
+ 703 0294 01F4      		brne .L44
+ 704               	.LBE85:
+ 705               	.LBB86:
+ 165:main.c        ****     } else {
+ 166:main.c        ****       return '\0';
+ 167:main.c        ****     }
+ 168:main.c        ****   }
+ 169:main.c        ****   
+ 170:main.c        ****   for (int i = 0; i<5; i++) {
+ 171:main.c        ****     sReturn[nReturnPos++] = code[ nChannelCode ][i];
+ 707               	.LM60:
+ 708 0296 660F      		lsl r22
+ 709 0298 771F      		rol r23
+ 710 029a 6C0F      		add r22,r28
+ 711 029c 7D1F      		adc r23,r29
+ 712 029e FB01      		movw r30,r22
+ 713 02a0 6181      		ldd r22,Z+1
+ 714 02a2 7281      		ldd r23,Z+2
+ 715 02a4 AD01      		movw r20,r26
+ 716 02a6 4050      		subi r20,lo8(-(sReturn.1739))
+ 717 02a8 5040      		sbci r21,hi8(-(sReturn.1739))
+ 718 02aa 20E0      		ldi r18,lo8(0)
+ 719 02ac 30E0      		ldi r19,hi8(0)
+ 720               	.L45:
+ 721 02ae FB01      		movw r30,r22
+ 722 02b0 E20F      		add r30,r18
+ 723 02b2 F31F      		adc r31,r19
+ 724 02b4 8081      		ld r24,Z
+ 725 02b6 FA01      		movw r30,r20
+ 726 02b8 8193      		st Z+,r24
+ 727 02ba AF01      		movw r20,r30
+ 170:main.c        ****   for (int i = 0; i<5; i++) {
+ 729               	.LM61:
+ 730 02bc 2F5F      		subi r18,lo8(-(1))
+ 731 02be 3F4F      		sbci r19,hi8(-(1))
+ 732 02c0 2530      		cpi r18,5
+ 733 02c2 3105      		cpc r19,__zero_reg__
+ 734 02c4 01F4      		brne .L45
+ 735 02c6 9D01      		movw r18,r26
+ 736 02c8 2050      		subi r18,lo8(-(sReturn.1739+5))
+ 737 02ca 3040      		sbci r19,hi8(-(sReturn.1739+5))
+ 738 02cc FD01      		movw r30,r26
+ 739 02ce 3696      		adiw r30,6
+ 740 02d0 BD01      		movw r22,r26
+ 741 02d2 695F      		subi r22,lo8(-(7))
+ 742 02d4 7F4F      		sbci r23,hi8(-(7))
+ 743               	.LBE86:
+ 172:main.c        ****   }
+ 173:main.c        ****   
+ 174:main.c        ****   if (bStatus) {
+ 745               	.LM62:
+ 746 02d6 0023      		tst r16
+ 747 02d8 01F0      		breq .L46
+ 175:main.c        ****     sReturn[nReturnPos++] = '0';
+ 749               	.LM63:
+ 750 02da 80E3      		ldi r24,lo8(48)
+ 751 02dc D901      		movw r26,r18
+ 752 02de 8C93      		st X,r24
+ 176:main.c        ****     sReturn[nReturnPos++] = 'F';
+ 754               	.LM64:
+ 755 02e0 E050      		subi r30,lo8(-(sReturn.1739))
+ 756 02e2 F040      		sbci r31,hi8(-(sReturn.1739))
+ 757 02e4 86E4      		ldi r24,lo8(70)
+ 758 02e6 00C0      		rjmp .L54
+ 759               	.L46:
+ 177:main.c        ****   } else {
+ 178:main.c        ****     sReturn[nReturnPos++] = 'F';
+ 761               	.LM65:
+ 762 02e8 86E4      		ldi r24,lo8(70)
+ 763 02ea D901      		movw r26,r18
+ 764 02ec 8C93      		st X,r24
+ 179:main.c        ****     sReturn[nReturnPos++] = '0';
+ 766               	.LM66:
+ 767 02ee E050      		subi r30,lo8(-(sReturn.1739))
+ 768 02f0 F040      		sbci r31,hi8(-(sReturn.1739))
+ 769 02f2 80E3      		ldi r24,lo8(48)
+ 770               	.L54:
+ 771 02f4 8083      		st Z,r24
+ 180:main.c        ****   }
+ 181:main.c        ****   sReturn[nReturnPos] = '\0';
+ 773               	.LM67:
+ 774 02f6 6050      		subi r22,lo8(-(sReturn.1739))
+ 775 02f8 7040      		sbci r23,hi8(-(sReturn.1739))
+ 776 02fa FB01      		movw r30,r22
+ 777 02fc 1082      		st Z,__zero_reg__
+ 778 02fe 20E0      		ldi r18,lo8(sReturn.1739)
+ 779 0300 30E0      		ldi r19,hi8(sReturn.1739)
+ 780 0302 00C0      		rjmp .L48
+ 781               	.L41:
+ 182:main.c        **** 
+ 183:main.c        ****   return sReturn;
+ 783               	.LM68:
+ 784 0304 20E0      		ldi r18,lo8(0)
+ 785 0306 30E0      		ldi r19,hi8(0)
+ 786               	.L48:
+ 184:main.c        **** }
+ 788               	.LM69:
+ 789 0308 C901      		movw r24,r18
+ 790               	/* epilogue start */
+ 791 030a 2C96      		adiw r28,12
+ 792 030c 0FB6      		in __tmp_reg__,__SREG__
+ 793 030e F894      		cli
+ 794 0310 DEBF      		out __SP_H__,r29
+ 795 0312 0FBE      		out __SREG__,__tmp_reg__
+ 796 0314 CDBF      		out __SP_L__,r28
+ 797 0316 CF91      		pop r28
+ 798 0318 DF91      		pop r29
+ 799 031a 1F91      		pop r17
+ 800 031c 0F91      		pop r16
+ 801 031e 0895      		ret
+ 810               	.Lscope11:
+ 812               	.global	sendTriState
+ 814               	sendTriState:
+ 185:main.c        **** 
+ 186:main.c        **** /*
+ 187:main.c        **** void sendFilled(unsigned long Code, unsigned int length){
+ 188:main.c        **** 	send(dec2binWzerofill(Code, length) );
+ 189:main.c        **** }
+ 190:main.c        **** 
+ 191:main.c        **** void send(char* sCodeWord){
+ 192:main.c        ****   for (int nRepeat=0; nRepeat<nRepeatTransmit; nRepeat++) {
+ 193:main.c        **** 	int i = 0;
+ 194:main.c        **** 	while (sCodeWord[i] != '\0') {
+ 195:main.c        **** 		if(sCodeWord[i] == '0') this->send0();
+ 196:main.c        **** 		if(sCodeWord[i] == '1') this->send1();
+ 197:main.c        **** 	i++;
+ 198:main.c        ****     }
+ 199:main.c        ****     sendSync();
+ 200:main.c        ****   }
+ 201:main.c        **** }
+ 202:main.c        **** */
+ 203:main.c        **** 
+ 204:main.c        **** void sendTriState(char* sCodeWord) {
+ 816               	.LM70:
+ 817               	.LFBB12:
+ 818 0320 EF92      		push r14
+ 819 0322 FF92      		push r15
+ 820 0324 0F93      		push r16
+ 821 0326 1F93      		push r17
+ 822 0328 CF93      		push r28
+ 823 032a DF93      		push r29
+ 824               	/* prologue: function */
+ 825               	/* frame size = 0 */
+ 826 032c 7C01      		movw r14,r24
+ 828               	.LM71:
+ 829 032e 00E0      		ldi r16,lo8(0)
+ 830 0330 10E0      		ldi r17,hi8(0)
+ 831 0332 00C0      		rjmp .L56
+ 832               	.L60:
+ 833               	.LBB87:
+ 834               	.LBB88:
+ 205:main.c        ****   for (int nRepeat=0; nRepeat<nRepeatTransmit; nRepeat++) {
+ 206:main.c        ****     int i = 0;
+ 207:main.c        ****     while (sCodeWord[i] != '\0') {
+ 208:main.c        **** 	if(sCodeWord[i] == '0') sendT0();
+ 836               	.LM72:
+ 837 0334 8033      		cpi r24,lo8(48)
+ 838 0336 01F4      		brne .L57
+ 839 0338 00D0      		rcall sendT0
+ 840               	.L57:
+ 209:main.c        **** 	if(sCodeWord[i] == 'F') sendTF();
+ 842               	.LM73:
+ 843 033a 8881      		ld r24,Y
+ 844 033c 8634      		cpi r24,lo8(70)
+ 845 033e 01F4      		brne .L58
+ 846 0340 00D0      		rcall sendTF
+ 847               	.L58:
+ 210:main.c        **** 	if(sCodeWord[i] == '1') sendT1();
+ 849               	.LM74:
+ 850 0342 8881      		ld r24,Y
+ 851 0344 8133      		cpi r24,lo8(49)
+ 852 0346 01F4      		brne .L59
+ 853 0348 00D0      		rcall sendT1
+ 854               	.L59:
+ 855 034a 2196      		adiw r28,1
+ 856               	.L62:
+ 207:main.c        ****     while (sCodeWord[i] != '\0') {
+ 858               	.LM75:
+ 859 034c 8881      		ld r24,Y
+ 860 034e 8823      		tst r24
+ 861 0350 01F4      		brne .L60
+ 211:main.c        **** 	i++;
+ 212:main.c        ****     }
+ 213:main.c        ****     sendSync();    
+ 863               	.LM76:
+ 864 0352 00D0      		rcall sendSync
+ 865               	.LBE88:
+ 205:main.c        ****   for (int nRepeat=0; nRepeat<nRepeatTransmit; nRepeat++) {
+ 867               	.LM77:
+ 868 0354 0F5F      		subi r16,lo8(-(1))
+ 869 0356 1F4F      		sbci r17,hi8(-(1))
+ 870               	.L56:
+ 871 0358 8091 0000 		lds r24,nRepeatTransmit
+ 872 035c 9091 0000 		lds r25,(nRepeatTransmit)+1
+ 873 0360 0817      		cp r16,r24
+ 874 0362 1907      		cpc r17,r25
+ 875 0364 04F4      		brge .L63
+ 876 0366 E701      		movw r28,r14
+ 877 0368 00C0      		rjmp .L62
+ 878               	.L63:
+ 879               	/* epilogue start */
+ 880               	.LBE87:
+ 214:main.c        ****   }
+ 215:main.c        **** }
+ 882               	.LM78:
+ 883 036a DF91      		pop r29
+ 884 036c CF91      		pop r28
+ 885 036e 1F91      		pop r17
+ 886 0370 0F91      		pop r16
+ 887 0372 FF90      		pop r15
+ 888 0374 EF90      		pop r14
+ 889 0376 0895      		ret
+ 891               	.Lscope12:
+ 895               	.global	switchOn
+ 897               	switchOn:
+ 216:main.c        **** 
+ 217:main.c        **** void switchOn(char* sGroup, int nChannel){
+ 899               	.LM79:
+ 900               	.LFBB13:
+ 901               	/* prologue: function */
+ 902               	/* frame size = 0 */
+ 218:main.c        ****     sendTriState(getCodeWordA(sGroup, nChannel, true) );
+ 904               	.LM80:
+ 905 0378 41E0      		ldi r20,lo8(1)
+ 906 037a 00D0      		rcall getCodeWordA
+ 907 037c 00D0      		rcall sendTriState
+ 908               	/* epilogue start */
+ 219:main.c        **** }
+ 910               	.LM81:
+ 911 037e 0895      		ret
+ 913               	.Lscope13:
+ 917               	.global	switchOff
+ 919               	switchOff:
+ 220:main.c        **** 
+ 221:main.c        **** void switchOff(char *sGroup, int nChannel){
+ 921               	.LM82:
+ 922               	.LFBB14:
+ 923               	/* prologue: function */
+ 924               	/* frame size = 0 */
+ 222:main.c        ****     sendTriState(getCodeWordA(sGroup, nChannel, false) );
+ 926               	.LM83:
+ 927 0380 40E0      		ldi r20,lo8(0)
+ 928 0382 00D0      		rcall getCodeWordA
+ 929 0384 00D0      		rcall sendTriState
+ 930               	/* epilogue start */
+ 223:main.c        **** }
+ 932               	.LM84:
+ 933 0386 0895      		ret
+ 935               	.Lscope14:
+ 937               	.global	__vector_11
+ 939               	__vector_11:
+ 224:main.c        **** 
+ 225:main.c        **** int main (void) {
+ 226:main.c        ****     char stringbuffer[64];  // Allgemeiner Puffer für Strings
+ 227:main.c        ****     uint8_t buffer_full=0;  // noch ein Flag, aber nur in der Hauptschleife
+ 228:main.c        ****     char * charpointer;     // Hilfszeiger
+ 229:main.c        **** 	int sampleValue = 0;
+ 230:main.c        **** 
+ 231:main.c        ****     // IO konfigurieren
+ 232:main.c        ****     DDRB = 0xFF;
+ 233:main.c        ****     DDRC = 0x00;
+ 234:main.c        **** 	PORTC = 0x00;
+ 235:main.c        ****     //DDRD = 0xFF;
+ 236:main.c        ****     DDRD |= (1<<STECKDOSENPIN); // Output pin für Steckdosensteuerung
+ 237:main.c        **** 
+ 238:main.c        **** 	// FIXME: this is how you control a power outlet
+ 239:main.c        **** /*
+ 240:main.c        ****     int mytmp = 0;
+ 241:main.c        ****     for(mytmp=0;mytmp<4;mytmp++){
+ 242:main.c        ****         switchOn("11111", 4); // 1st parameter: 1st 5 dip-switches, 2nd parameter: the one switch t
+ 243:main.c        ****         _delay_ms(10000);
+ 244:main.c        ****         switchOff("11111", 4);
+ 245:main.c        ****         _delay_ms(10000);
+ 246:main.c        ****     }
+ 247:main.c        **** */
+ 248:main.c        **** 
+ 249:main.c        ****     //DDRD = (DDRD|0x01);
+ 250:main.c        **** 
+ 251:main.c        **** 	ADMUX = 0x00;
+ 252:main.c        **** 	ADMUX |= (1<<REFS1)| (1<<REFS0); // 0b01000000; // interne Ref-Spannung, avcc, pc0 als adc
+ 253:main.c        **** 	ADCSRA |= (1<<ADEN) | (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);
+ 254:main.c        **** 
+ 255:main.c        **** 
+ 256:main.c        ****     // Servo konfigurieren
+ 257:main.c        ****     // Werte für OCR1A: zw. 650 und 1900!
+ 258:main.c        ****     /*
+ 259:main.c        ****     ICR1=10000;
+ 260:main.c        ****     TCCR1A|=(0<<COM1A0)|(1<<COM1A1)|(0<<COM1B0)|(0<<COM1B1)|(0<<FOC1A)|(0<<FOC1B)|(1<<WGM11)|(0<<WG
+ 261:main.c        ****     TCCR1B|=(0<<ICNC1)|(0<<ICES1)|(1<<WGM13)|(1<<WGM12)|(0<<CS12)|(1<<CS11)|(0<<CS10);
+ 262:main.c        ****     OCR1A = 1300;
+ 263:main.c        ****     */
+ 264:main.c        **** 
+ 265:main.c        ****     // UART konfigurieren
+ 266:main.c        ****     UBRRH = UBRR_VAL >> 8;
+ 267:main.c        ****     UBRRL = UBRR_VAL & 0xFF;
+ 268:main.c        ****     UCSRB = (1<<RXCIE) | (1<<RXEN) | (1<<TXEN); 
+ 269:main.c        **** 
+ 270:main.c        ****     UCSRC = (1<<URSEL)|(1<<USBS)|(3<<UCSZ0);      //Asynchron 8N1
+ 271:main.c        **** 
+ 272:main.c        ****     // Stringpuffer initialisieren
+ 273:main.c        ****     //stringbuffer[0] = '\n';
+ 274:main.c        ****     //stringbuffer[1] = '\r';
+ 275:main.c        **** 
+ 276:main.c        ****     // Interrupts freigeben
+ 277:main.c        ****     sei();
+ 278:main.c        **** 
+ 279:main.c        ****     while(1) {
+ 280:main.c        ****         if (uart_rx_flag==1 && buffer_full==0) {
+ 281:main.c        ****             get_string(stringbuffer);
+ 282:main.c        ****             buffer_full=1;
+ 283:main.c        ****         }
+ 284:main.c        **** 
+ 285:main.c        **** 	/*
+ 286:main.c        **** 	 * zum testen, falls "S1" gesendet wurde,
+ 287:main.c        **** 	 * schalte Pin C0 ein
+ 288:main.c        **** 	 */
+ 289:main.c        **** 	if(stringbuffer[0] == 'S'){
+ 290:main.c        **** 		if(stringbuffer[1] == '1'){
+ 291:main.c        **** 			PORTC |= (1<<5);
+ 292:main.c        **** 			send_ok();
+ 293:main.c        **** 			// put other char in there to not trigger it again
+ 294:main.c        **** 			stringbuffer[0] = 'N';
+ 295:main.c        **** 			buffer_full = 0;
+ 296:main.c        **** 		}	
+ 297:main.c        **** 	}else if(stringbuffer[0] == 'U'){
+ 298:main.c        **** 		if(stringbuffer[1] == '1'){
+ 299:main.c        **** 			PORTC &= ~(1<<5);
+ 300:main.c        **** 			send_ok();
+ 301:main.c        **** 			stringbuffer[0] = 'N';
+ 302:main.c        **** 			buffer_full = 0;
+ 303:main.c        **** 		}
+ 304:main.c        **** 	}else if(stringbuffer[0] == 'G'){ // adc wert anfordern
+ 305:main.c        **** 		ADCSRA |= (1<<ADSC);  //single conversion mode ein
+ 306:main.c        **** 		while(ADCSRA & (1<<ADSC));  //warten bis konvertierung abgeschlosen
+ 307:main.c        **** 		sampleValue = ADCW;
+ 308:main.c        **** 		dtostrf( res2temp(adc2res(sampleValue)), 5, 2, stringbuffer );
+ 309:main.c        **** 		strcat(stringbuffer, "\n\r");
+ 310:main.c        **** 		_delay_ms(100);
+ 311:main.c        **** 		put_string(stringbuffer);
+ 312:main.c        **** 		buffer_full = 0;
+ 313:main.c        **** 	}else if(stringbuffer[0] == 'L'){ // lichter schalten
+ 314:main.c        **** 		if(stringbuffer[2] == '1'){ // blaues Licht an
+ 315:main.c        **** 			// TOBI
+ 316:main.c        **** 		        switchOn("11111", stringbuffer[1] - '0'); // 1st parameter: 1st 5 dip-switches, 2nd param
+ 317:main.c        **** 			_delay_ms(100);
+ 318:main.c        **** 		        switchOn("11111", stringbuffer[1] - '0'); // 1st parameter: 1st 5 dip-switches, 2nd param
+ 319:main.c        **** 			_delay_ms(100);
+ 320:main.c        **** 		}else if(stringbuffer[2] == '0'){ // blaues Licht aus
+ 321:main.c        **** 		        switchOff("11111", stringbuffer[1] - '0');
+ 322:main.c        **** 			_delay_ms(100);
+ 323:main.c        **** 		        switchOff("11111", stringbuffer[1] - '0');
+ 324:main.c        **** 			_delay_ms(100);
+ 325:main.c        **** 		}	
+ 326:main.c        **** 		stringbuffer[0] = 'N';
+ 327:main.c        **** 		buffer_full = 0;
+ 328:main.c        **** 	}else{
+ 329:main.c        **** 		_delay_ms(10);
+ 330:main.c        **** 	        if (uart_tx_flag==1 && buffer_full==1) {
+ 331:main.c        **** 	            strcat(stringbuffer, "\n\r");
+ 332:main.c        **** 	            put_string(stringbuffer); // zurücksenden
+ 333:main.c        **** 	            buffer_full=0; // Buffer ist wieder verfügbar
+ 334:main.c        **** 	        }
+ 335:main.c        **** 	}
+ 336:main.c        ****     }
+ 337:main.c        **** }
+ 338:main.c        **** 
+ 339:main.c        **** ISR(USART_RXC_vect) {
+ 941               	.LM85:
+ 942               	.LFBB15:
+ 943 0388 1F92      		push __zero_reg__
+ 944 038a 0F92      		push r0
+ 945 038c 0FB6      		in r0,__SREG__
+ 946 038e 0F92      		push r0
+ 947 0390 1124      		clr __zero_reg__
+ 948 0392 8F93      		push r24
+ 949 0394 9F93      		push r25
+ 950 0396 EF93      		push r30
+ 951 0398 FF93      		push r31
+ 952               	/* prologue: Signal */
+ 953               	/* frame size = 0 */
+ 340:main.c        ****     static uint8_t uart_rx_cnt=0;     // Zähler für empfangene Zeichen
+ 341:main.c        ****     uint8_t data;
+ 342:main.c        **** 
+ 343:main.c        ****     data = UDR;
+ 955               	.LM86:
+ 956 039a 9CB1      		in r25,44-32
+ 344:main.c        **** 
+ 345:main.c        ****     if (!uart_rx_flag) {
+ 958               	.LM87:
+ 959 039c 8091 0000 		lds r24,uart_rx_flag
+ 960 03a0 8823      		tst r24
+ 961 03a2 01F4      		brne .L71
+ 962 03a4 8091 0000 		lds r24,uart_rx_cnt.1839
+ 346:main.c        ****         if (data == '\r') {
+ 964               	.LM88:
+ 965 03a8 9D30      		cpi r25,lo8(13)
+ 966 03aa 01F4      		brne .L70
+ 347:main.c        ****             uart_rx_buffer[uart_rx_cnt]=0;
+ 968               	.LM89:
+ 969 03ac E82F      		mov r30,r24
+ 970 03ae F0E0      		ldi r31,lo8(0)
+ 971 03b0 E050      		subi r30,lo8(-(uart_rx_buffer))
+ 972 03b2 F040      		sbci r31,hi8(-(uart_rx_buffer))
+ 973 03b4 1082      		st Z,__zero_reg__
+ 348:main.c        ****             uart_rx_flag=1;
+ 975               	.LM90:
+ 976 03b6 81E0      		ldi r24,lo8(1)
+ 977 03b8 8093 0000 		sts uart_rx_flag,r24
+ 349:main.c        ****             uart_rx_cnt=0;
+ 979               	.LM91:
+ 980 03bc 1092 0000 		sts uart_rx_cnt.1839,__zero_reg__
+ 981 03c0 00C0      		rjmp .L71
+ 982               	.L70:
+ 350:main.c        ****         }else if (uart_rx_cnt<(uart_buffer_size-1)) {
+ 984               	.LM92:
+ 985 03c2 8F3F      		cpi r24,lo8(-1)
+ 986 03c4 01F0      		breq .L71
+ 351:main.c        ****             uart_rx_buffer[uart_rx_cnt]=data;
+ 988               	.LM93:
+ 989 03c6 E82F      		mov r30,r24
+ 990 03c8 F0E0      		ldi r31,lo8(0)
+ 991 03ca E050      		subi r30,lo8(-(uart_rx_buffer))
+ 992 03cc F040      		sbci r31,hi8(-(uart_rx_buffer))
+ 993 03ce 9083      		st Z,r25
+ 352:main.c        ****             uart_rx_cnt++; // Zähler erhöhen
+ 995               	.LM94:
+ 996 03d0 8F5F      		subi r24,lo8(-(1))
+ 997 03d2 8093 0000 		sts uart_rx_cnt.1839,r24
+ 998               	.L71:
+ 999               	/* epilogue start */
+ 353:main.c        ****         }
+ 354:main.c        ****     }
+ 355:main.c        **** }
+ 1001               	.LM95:
+ 1002 03d6 FF91      		pop r31
+ 1003 03d8 EF91      		pop r30
+ 1004 03da 9F91      		pop r25
+ 1005 03dc 8F91      		pop r24
+ 1006 03de 0F90      		pop r0
+ 1007 03e0 0FBE      		out __SREG__,r0
+ 1008 03e2 0F90      		pop r0
+ 1009 03e4 1F90      		pop __zero_reg__
+ 1010 03e6 1895      		reti
+ 1016               	.Lscope15:
+ 1018               	.global	__vector_12
+ 1020               	__vector_12:
+ 356:main.c        **** 
+ 357:main.c        **** 
+ 358:main.c        **** ISR(USART_UDRE_vect) {
+ 1022               	.LM96:
+ 1023               	.LFBB16:
+ 1024 03e8 1F92      		push __zero_reg__
+ 1025 03ea 0F92      		push r0
+ 1026 03ec 0FB6      		in r0,__SREG__
+ 1027 03ee 0F92      		push r0
+ 1028 03f0 1124      		clr __zero_reg__
+ 1029 03f2 8F93      		push r24
+ 1030 03f4 9F93      		push r25
+ 1031 03f6 EF93      		push r30
+ 1032 03f8 FF93      		push r31
+ 1033               	/* prologue: Signal */
+ 1034               	/* frame size = 0 */
+ 359:main.c        ****     static char* uart_tx_p = uart_tx_buffer;    
+ 360:main.c        ****     uint8_t data;
+ 361:main.c        **** 
+ 362:main.c        ****     data = *uart_tx_p++;
+ 1036               	.LM97:
+ 1037 03fa E091 0000 		lds r30,uart_tx_p.1851
+ 1038 03fe F091 0000 		lds r31,(uart_tx_p.1851)+1
+ 1039 0402 8191      		ld r24,Z+
+ 1040 0404 F093 0000 		sts (uart_tx_p.1851)+1,r31
+ 1041 0408 E093 0000 		sts uart_tx_p.1851,r30
+ 363:main.c        **** 
+ 364:main.c        ****     if (data == 0 ) {
+ 1043               	.LM98:
+ 1044 040c 8823      		tst r24
+ 1045 040e 01F4      		brne .L73
+ 365:main.c        ****         UCSRB &= ~(1<<UDRIE);       // ja, dann UDRE Interrupt ausschalten
+ 1047               	.LM99:
+ 1048 0410 5598      		cbi 42-32,5
+ 366:main.c        ****         uart_tx_p = uart_tx_buffer; // Pointer zurücksetzen
+ 1050               	.LM100:
+ 1051 0412 80E0      		ldi r24,lo8(uart_tx_buffer)
+ 1052 0414 90E0      		ldi r25,hi8(uart_tx_buffer)
+ 1053 0416 9093 0000 		sts (uart_tx_p.1851)+1,r25
+ 1054 041a 8093 0000 		sts uart_tx_p.1851,r24
+ 367:main.c        ****         uart_tx_flag = 1;           // Flag setzen, Übertragung beeendet
+ 1056               	.LM101:
+ 1057 041e 81E0      		ldi r24,lo8(1)
+ 1058 0420 8093 0000 		sts uart_tx_flag,r24
+ 1059 0424 00C0      		rjmp .L75
+ 1060               	.L73:
+ 368:main.c        ****     }else{
+ 369:main.c        **** 	 UDR = data;                // nein, Daten senden
+ 1062               	.LM102:
+ 1063 0426 8CB9      		out 44-32,r24
+ 1064               	.LBB89:
+ 1065               	.LBB90:
+ 1066               	.LBB91:
+ 1067               	.LBB92:
+ 1069               	.Ltext5:
   84:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h **** 		"1: dec %0" "\n\t"
   85:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h **** 		"brne 1b"
   86:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h **** 		: "=r" (__count)
@@ -497,347 +1288,353 @@
  103:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h **** _delay_loop_2(uint16_t __count)
  104:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h **** {
  105:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h **** 	__asm__ volatile (
- 322               	.LM24:
- 323 0122 80E2      		ldi r24,lo8(20000)
- 324 0124 9EE4      		ldi r25,hi8(20000)
- 325               	/* #APP */
- 326               	 ;  105 "/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h" 1
- 327 0126 0197      		1: sbiw r24,1
- 328 0128 01F4      		brne 1b
- 329               	 ;  0 "" 2
- 330               	/* #NOAPP */
- 331               	.L12:
- 332               	/* epilogue start */
- 333               	.LBE27:
- 334               	.LBE26:
- 335               	.LBE25:
- 336               	.LBE24:
- 338               	.Ltext2:
- 195:main.c        **** 	_delay_ms(10);
- 196:main.c        **** 	}
- 197:main.c        **** }
- 340               	.LM25:
- 341 012a FF91      		pop r31
- 342 012c EF91      		pop r30
- 343 012e 9F91      		pop r25
- 344 0130 8F91      		pop r24
- 345 0132 0F90      		pop r0
- 346 0134 0FBE      		out __SREG__,r0
- 347 0136 0F90      		pop r0
- 348 0138 1F90      		pop __zero_reg__
- 349 013a 1895      		reti
- 355               	.Lscope4:
- 358               	.global	get_string
- 360               	get_string:
-  47:main.c        **** void get_string(char *daten) {
- 362               	.LM26:
- 363               	.LFBB5:
- 364               	/* prologue: function */
- 365               	/* frame size = 0 */
- 366 013c 9C01      		movw r18,r24
-  48:main.c        ****    if (uart_rx_flag==1) {
- 368               	.LM27:
- 369 013e 8091 0000 		lds r24,uart_rx_flag
- 370 0142 8130      		cpi r24,lo8(1)
- 371 0144 01F4      		brne .L15
-  49:main.c        ****       strcpy(daten, uart_rx_buffer);
- 373               	.LM28:
- 374 0146 C901      		movw r24,r18
- 375 0148 60E0      		ldi r22,lo8(uart_rx_buffer)
- 376 014a 70E0      		ldi r23,hi8(uart_rx_buffer)
- 377 014c 00D0      		rcall strcpy
-  50:main.c        ****       uart_rx_flag = 0;
- 379               	.LM29:
- 380 014e 1092 0000 		sts uart_rx_flag,__zero_reg__
- 381               	.L15:
- 382 0152 0895      		ret
- 384               	.Lscope5:
- 387               	.global	put_string
- 389               	put_string:
-  39:main.c        **** void put_string(char *daten) {
- 391               	.LM30:
- 392               	.LFBB6:
- 393               	/* prologue: function */
- 394               	/* frame size = 0 */
- 395 0154 BC01      		movw r22,r24
-  40:main.c        ****    if (uart_tx_flag == 1) {
- 397               	.LM31:
- 398 0156 8091 0000 		lds r24,uart_tx_flag
- 399 015a 8130      		cpi r24,lo8(1)
- 400 015c 01F4      		brne .L18
-  41:main.c        ****       strcpy(uart_tx_buffer, daten);      
- 402               	.LM32:
- 403 015e 80E0      		ldi r24,lo8(uart_tx_buffer)
- 404 0160 90E0      		ldi r25,hi8(uart_tx_buffer)
- 405 0162 00D0      		rcall strcpy
-  42:main.c        ****       uart_tx_flag = 0;                    
- 407               	.LM33:
- 408 0164 1092 0000 		sts uart_tx_flag,__zero_reg__
-  43:main.c        ****       UCSRB |= (1<<UDRIE); 
- 410               	.LM34:
- 411 0168 559A      		sbi 42-32,5
- 412               	.L18:
- 413 016a 0895      		ret
- 415               	.Lscope6:
- 417               	.global	send_ok
- 419               	send_ok:
-  54:main.c        **** void send_ok(){
- 421               	.LM35:
- 422               	.LFBB7:
- 423 016c DF93      		push r29
- 424 016e CF93      		push r28
- 425 0170 00D0      		rcall .
- 426 0172 00D0      		rcall .
- 427 0174 CDB7      		in r28,__SP_L__
- 428 0176 DEB7      		in r29,__SP_H__
- 429               	/* prologue: function */
- 430               	/* frame size = 4 */
-  56:main.c        **** 	message[0] = 'O';
- 432               	.LM36:
- 433 0178 8FE4      		ldi r24,lo8(79)
- 434 017a 8983      		std Y+1,r24
-  57:main.c        **** 	message[1] = 'K';
- 436               	.LM37:
- 437 017c 8BE4      		ldi r24,lo8(75)
- 438 017e 8A83      		std Y+2,r24
-  58:main.c        **** 	message[2] = '\n';
- 440               	.LM38:
- 441 0180 8AE0      		ldi r24,lo8(10)
- 442 0182 8B83      		std Y+3,r24
-  59:main.c        **** 	message[3] = '\r';
- 444               	.LM39:
- 445 0184 8DE0      		ldi r24,lo8(13)
- 446 0186 8C83      		std Y+4,r24
-  60:main.c        **** 	put_string(message);
- 448               	.LM40:
- 449 0188 CE01      		movw r24,r28
- 450 018a 0196      		adiw r24,1
- 451 018c 00D0      		rcall put_string
- 452               	/* epilogue start */
-  61:main.c        **** }
- 454               	.LM41:
- 455 018e 0F90      		pop __tmp_reg__
- 456 0190 0F90      		pop __tmp_reg__
- 457 0192 0F90      		pop __tmp_reg__
- 458 0194 0F90      		pop __tmp_reg__
- 459 0196 CF91      		pop r28
- 460 0198 DF91      		pop r29
- 461 019a 0895      		ret
- 466               	.Lscope7:
- 467               		.data
- 468               	.LC0:
- 469 0000 0A0D 00   		.string	"\n\r"
- 470               		.text
- 472               	.global	main
- 474               	main:
-  75:main.c        **** int main (void) {
- 476               	.LM42:
- 477               	.LFBB8:
- 478 019c 9F92      		push r9
- 479 019e AF92      		push r10
- 480 01a0 BF92      		push r11
- 481 01a2 CF92      		push r12
- 482 01a4 DF92      		push r13
- 483 01a6 EF92      		push r14
- 484 01a8 FF92      		push r15
- 485 01aa 0F93      		push r16
- 486 01ac 1F93      		push r17
- 487 01ae DF93      		push r29
- 488 01b0 CF93      		push r28
- 489 01b2 CDB7      		in r28,__SP_L__
- 490 01b4 DEB7      		in r29,__SP_H__
- 491 01b6 C054      		subi r28,lo8(-(-64))
- 492 01b8 D040      		sbci r29,hi8(-(-64))
- 493 01ba 0FB6      		in __tmp_reg__,__SREG__
- 494 01bc F894      		cli
- 495 01be DEBF      		out __SP_H__,r29
- 496 01c0 0FBE      		out __SREG__,__tmp_reg__
- 497 01c2 CDBF      		out __SP_L__,r28
- 498               	/* prologue: function */
- 499               	/* frame size = 64 */
-  82:main.c        ****     DDRB = 0xFF;
- 501               	.LM43:
- 502 01c4 8FEF      		ldi r24,lo8(-1)
- 503 01c6 87BB      		out 55-32,r24
-  83:main.c        ****     DDRC = 0x00;
- 505               	.LM44:
- 506 01c8 14BA      		out 52-32,__zero_reg__
-  84:main.c        **** 	PORTC = 0x00;
- 508               	.LM45:
- 509 01ca 15BA      		out 53-32,__zero_reg__
-  88:main.c        **** 	ADMUX = 0x00;
- 511               	.LM46:
- 512 01cc 17B8      		out 39-32,__zero_reg__
-  89:main.c        **** 	ADMUX |= (1<<REFS1)| (1<<REFS0); // 0b01000000; // interne Ref-Spannung, avcc, pc0 als adc
- 514               	.LM47:
- 515 01ce 87B1      		in r24,39-32
- 516 01d0 806C      		ori r24,lo8(-64)
- 517 01d2 87B9      		out 39-32,r24
-  90:main.c        **** 	ADCSRA |= (1<<ADEN) | (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);
- 519               	.LM48:
- 520 01d4 86B1      		in r24,38-32
- 521 01d6 8768      		ori r24,lo8(-121)
- 522 01d8 86B9      		out 38-32,r24
- 103:main.c        ****     UBRRH = UBRR_VAL >> 8;
- 524               	.LM49:
- 525 01da 10BC      		out 64-32,__zero_reg__
- 104:main.c        ****     UBRRL = UBRR_VAL & 0xFF;
- 527               	.LM50:
- 528 01dc 83E3      		ldi r24,lo8(51)
- 529 01de 89B9      		out 41-32,r24
- 105:main.c        ****     UCSRB = (1<<RXCIE) | (1<<RXEN) | (1<<TXEN); 
- 531               	.LM51:
- 532 01e0 88E9      		ldi r24,lo8(-104)
- 533 01e2 8AB9      		out 42-32,r24
- 107:main.c        ****     UCSRC = (1<<URSEL)|(1<<USBS)|(3<<UCSZ0);      //Asynchron 8N1
- 535               	.LM52:
- 536 01e4 8EE8      		ldi r24,lo8(-114)
- 537 01e6 80BD      		out 64-32,r24
- 114:main.c        ****     sei();
- 539               	.LM53:
- 540               	/* #APP */
- 541               	 ;  114 "main.c" 1
- 542 01e8 7894      		sei
- 543               	 ;  0 "" 2
- 544               	/* #NOAPP */
- 545 01ea 20E0      		ldi r18,lo8(0)
- 120:main.c        ****             get_string(stringbuffer);
- 547               	.LM54:
- 548 01ec 7E01      		movw r14,r28
- 549 01ee 0894      		sec
- 550 01f0 E11C      		adc r14,__zero_reg__
- 551 01f2 F11C      		adc r15,__zero_reg__
- 552               	.LBB28:
- 553               	.LBB29:
- 554               	.LBB30:
- 555               	.LBB31:
- 557               	.Ltext3:
- 559               	.LM55:
- 560 01f4 30E2      		ldi r19,lo8(20000)
- 561 01f6 A32E      		mov r10,r19
- 562 01f8 3EE4      		ldi r19,hi8(20000)
- 563 01fa B32E      		mov r11,r19
- 564               	.LBE31:
- 565               	.LBE30:
- 566               	.LBE29:
- 567               	.LBE28:
- 568               	.LBB35:
- 569               	.LBB36:
- 570               	.LBB37:
- 571               	.LBB38:
- 572 01fc 98EC      		ldi r25,lo8(200)
- 573 01fe C92E      		mov r12,r25
- 574 0200 D12C      		mov r13,__zero_reg__
- 575               	.LBE38:
- 576               	.LBE37:
- 577               	.LBE36:
- 578               	.LBE35:
- 580               	.Ltext4:
- 140:main.c        **** 			stringbuffer[0] = 'N';
- 582               	.LM56:
- 583 0202 8EE4      		ldi r24,lo8(78)
- 584 0204 982E      		mov r9,r24
- 585               	.L35:
- 119:main.c        ****         if (uart_rx_flag==1 && buffer_full==0) {
- 587               	.LM57:
- 588 0206 8091 0000 		lds r24,uart_rx_flag
- 589 020a 8130      		cpi r24,lo8(1)
- 590 020c 01F4      		brne .L22
- 591 020e 2223      		tst r18
- 592 0210 01F4      		brne .L38
- 593               	.L23:
- 120:main.c        ****             get_string(stringbuffer);
- 595               	.LM58:
- 596 0212 C701      		movw r24,r14
- 597 0214 00D0      		rcall get_string
- 598               	.L38:
- 599 0216 21E0      		ldi r18,lo8(1)
- 600               	.L22:
- 128:main.c        **** 	if(stringbuffer[0] == 'S'){
- 602               	.LM59:
- 603 0218 8981      		ldd r24,Y+1
- 604 021a 8335      		cpi r24,lo8(83)
- 605 021c 01F4      		brne .L24
- 129:main.c        **** 		if(stringbuffer[1] == '1'){
- 607               	.LM60:
- 608 021e 8A81      		ldd r24,Y+2
- 609 0220 8133      		cpi r24,lo8(49)
- 610 0222 01F4      		brne .L35
- 130:main.c        **** 			PORTC |= (1<<5);
- 612               	.LM61:
- 613 0224 AD9A      		sbi 53-32,5
- 614 0226 00C0      		rjmp .L39
- 615               	.L24:
- 136:main.c        **** 	}else if(stringbuffer[0] == 'U'){
- 617               	.LM62:
- 618 0228 8535      		cpi r24,lo8(85)
- 619 022a 01F4      		brne .L26
- 137:main.c        **** 		if(stringbuffer[1] == '1'){
- 621               	.LM63:
- 622 022c 8A81      		ldd r24,Y+2
- 623 022e 8133      		cpi r24,lo8(49)
- 624 0230 01F4      		brne .L35
- 138:main.c        **** 			PORTC &= ~(1<<5);
- 626               	.LM64:
- 627 0232 AD98      		cbi 53-32,5
- 628               	.L39:
- 139:main.c        **** 			send_ok();
- 630               	.LM65:
- 631 0234 00D0      		rcall send_ok
- 140:main.c        **** 			stringbuffer[0] = 'N';
- 633               	.LM66:
- 634 0236 9982      		std Y+1,r9
- 635 0238 00C0      		rjmp .L37
- 636               	.L26:
- 143:main.c        **** 	}else if(stringbuffer[0] == 'G'){ // adc wert anfordern
- 638               	.LM67:
- 639 023a 8734      		cpi r24,lo8(71)
- 640 023c 01F4      		brne .L27
- 144:main.c        **** 		ADCSRA |= (1<<ADSC);  //single conversion mode ein
- 642               	.LM68:
- 643 023e 369A      		sbi 38-32,6
- 644               	.L28:
- 145:main.c        **** 		while(ADCSRA & (1<<ADSC));  //warten bis konvertierung abgeschlosen
- 646               	.LM69:
- 647 0240 3699      		sbic 38-32,6
- 648 0242 00C0      		rjmp .L28
- 146:main.c        **** 		sampleValue = ADCW;
- 650               	.LM70:
- 651 0244 84B1      		in r24,36-32
- 652 0246 95B1      		in r25,(36)+1-32
- 147:main.c        **** 		dtostrf( res2temp(adc2res(sampleValue)), 5, 2, stringbuffer );
- 654               	.LM71:
- 655 0248 00D0      		rcall adc2res
- 656 024a 00D0      		rcall res2temp
- 657 024c 45E0      		ldi r20,lo8(5)
- 658 024e 22E0      		ldi r18,lo8(2)
- 659 0250 8701      		movw r16,r14
- 660 0252 00D0      		rcall dtostrf
- 148:main.c        **** 		strcat(stringbuffer, "\n\r");
- 662               	.LM72:
- 663 0254 C701      		movw r24,r14
- 664 0256 60E0      		ldi r22,lo8(.LC0)
- 665 0258 70E0      		ldi r23,hi8(.LC0)
- 666 025a 00D0      		rcall strcat
- 667 025c 88EE      		ldi r24,lo8(1000)
- 668 025e 93E0      		ldi r25,hi8(1000)
- 669               	.L29:
- 670               	.LBB42:
- 671               	.LBB41:
- 672               	.LBB40:
- 673               	.LBB39:
- 675               	.Ltext5:
- 677               	.LM73:
- 678 0260 F601      		movw r30,r12
- 679               	/* #APP */
- 680               	 ;  105 "/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h" 1
- 681 0262 3197      		1: sbiw r30,1
- 682 0264 01F4      		brne 1b
- 683               	 ;  0 "" 2
- 684               	/* #NOAPP */
- 685               	.LBE39:
- 686               	.LBE40:
- 688               	.Ltext6:
+ 1071               	.LM103:
+ 1072 0428 80E2      		ldi r24,lo8(20000)
+ 1073 042a 9EE4      		ldi r25,hi8(20000)
+ 1074               	/* #APP */
+ 1075               	 ;  105 "/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h" 1
+ 1076 042c 0197      		1: sbiw r24,1
+ 1077 042e 01F4      		brne 1b
+ 1078               	 ;  0 "" 2
+ 1079               	/* #NOAPP */
+ 1080               	.L75:
+ 1081               	/* epilogue start */
+ 1082               	.LBE92:
+ 1083               	.LBE91:
+ 1084               	.LBE90:
+ 1085               	.LBE89:
+ 1087               	.Ltext6:
+ 370:main.c        **** 	_delay_ms(10);
+ 371:main.c        **** 	}
+ 372:main.c        **** }
+ 1089               	.LM104:
+ 1090 0430 FF91      		pop r31
+ 1091 0432 EF91      		pop r30
+ 1092 0434 9F91      		pop r25
+ 1093 0436 8F91      		pop r24
+ 1094 0438 0F90      		pop r0
+ 1095 043a 0FBE      		out __SREG__,r0
+ 1096 043c 0F90      		pop r0
+ 1097 043e 1F90      		pop __zero_reg__
+ 1098 0440 1895      		reti
+ 1104               	.Lscope16:
+ 1107               	.global	get_string
+ 1109               	get_string:
+  54:main.c        **** void get_string(char *daten) {
+ 1111               	.LM105:
+ 1112               	.LFBB17:
+ 1113               	/* prologue: function */
+ 1114               	/* frame size = 0 */
+ 1115 0442 9C01      		movw r18,r24
+  55:main.c        ****    if (uart_rx_flag==1) {
+ 1117               	.LM106:
+ 1118 0444 8091 0000 		lds r24,uart_rx_flag
+ 1119 0448 8130      		cpi r24,lo8(1)
+ 1120 044a 01F4      		brne .L78
+  56:main.c        ****       strcpy(daten, uart_rx_buffer);
+ 1122               	.LM107:
+ 1123 044c C901      		movw r24,r18
+ 1124 044e 60E0      		ldi r22,lo8(uart_rx_buffer)
+ 1125 0450 70E0      		ldi r23,hi8(uart_rx_buffer)
+ 1126 0452 00D0      		rcall strcpy
+  57:main.c        ****       uart_rx_flag = 0;
+ 1128               	.LM108:
+ 1129 0454 1092 0000 		sts uart_rx_flag,__zero_reg__
+ 1130               	.L78:
+ 1131 0458 0895      		ret
+ 1133               	.Lscope17:
+ 1136               	.global	put_string
+ 1138               	put_string:
+  46:main.c        **** void put_string(char *daten) {
+ 1140               	.LM109:
+ 1141               	.LFBB18:
+ 1142               	/* prologue: function */
+ 1143               	/* frame size = 0 */
+ 1144 045a BC01      		movw r22,r24
+  47:main.c        ****    if (uart_tx_flag == 1) {
+ 1146               	.LM110:
+ 1147 045c 8091 0000 		lds r24,uart_tx_flag
+ 1148 0460 8130      		cpi r24,lo8(1)
+ 1149 0462 01F4      		brne .L81
+  48:main.c        ****       strcpy(uart_tx_buffer, daten);      
+ 1151               	.LM111:
+ 1152 0464 80E0      		ldi r24,lo8(uart_tx_buffer)
+ 1153 0466 90E0      		ldi r25,hi8(uart_tx_buffer)
+ 1154 0468 00D0      		rcall strcpy
+  49:main.c        ****       uart_tx_flag = 0;                    
+ 1156               	.LM112:
+ 1157 046a 1092 0000 		sts uart_tx_flag,__zero_reg__
+  50:main.c        ****       UCSRB |= (1<<UDRIE); 
+ 1159               	.LM113:
+ 1160 046e 559A      		sbi 42-32,5
+ 1161               	.L81:
+ 1162 0470 0895      		ret
+ 1164               	.Lscope18:
+ 1166               	.global	send_ok
+ 1168               	send_ok:
+  61:main.c        **** void send_ok(void){
+ 1170               	.LM114:
+ 1171               	.LFBB19:
+ 1172 0472 DF93      		push r29
+ 1173 0474 CF93      		push r28
+ 1174 0476 00D0      		rcall .
+ 1175 0478 00D0      		rcall .
+ 1176 047a CDB7      		in r28,__SP_L__
+ 1177 047c DEB7      		in r29,__SP_H__
+ 1178               	/* prologue: function */
+ 1179               	/* frame size = 4 */
+  63:main.c        **** 	message[0] = 'O';
+ 1181               	.LM115:
+ 1182 047e 8FE4      		ldi r24,lo8(79)
+ 1183 0480 8983      		std Y+1,r24
+  64:main.c        **** 	message[1] = 'K';
+ 1185               	.LM116:
+ 1186 0482 8BE4      		ldi r24,lo8(75)
+ 1187 0484 8A83      		std Y+2,r24
+  65:main.c        **** 	message[2] = '\n';
+ 1189               	.LM117:
+ 1190 0486 8AE0      		ldi r24,lo8(10)
+ 1191 0488 8B83      		std Y+3,r24
+  66:main.c        **** 	message[3] = '\r';
+ 1193               	.LM118:
+ 1194 048a 8DE0      		ldi r24,lo8(13)
+ 1195 048c 8C83      		std Y+4,r24
+  67:main.c        **** 	put_string(message);
+ 1197               	.LM119:
+ 1198 048e CE01      		movw r24,r28
+ 1199 0490 0196      		adiw r24,1
+ 1200 0492 00D0      		rcall put_string
+ 1201               	/* epilogue start */
+  68:main.c        **** }
+ 1203               	.LM120:
+ 1204 0494 0F90      		pop __tmp_reg__
+ 1205 0496 0F90      		pop __tmp_reg__
+ 1206 0498 0F90      		pop __tmp_reg__
+ 1207 049a 0F90      		pop __tmp_reg__
+ 1208 049c CF91      		pop r28
+ 1209 049e DF91      		pop r29
+ 1210 04a0 0895      		ret
+ 1215               	.Lscope19:
+ 1216               		.data
+ 1217               	.LC0:
+ 1218 0000 0A0D 00   		.string	"\n\r"
+ 1219               	.LC1:
+ 1220 0003 3131 3131 		.string	"11111"
+ 1220      3100 
+ 1221               		.text
+ 1223               	.global	main
+ 1225               	main:
+ 225:main.c        **** int main (void) {
+ 1227               	.LM121:
+ 1228               	.LFBB20:
+ 1229 04a2 8F92      		push r8
+ 1230 04a4 9F92      		push r9
+ 1231 04a6 BF92      		push r11
+ 1232 04a8 CF92      		push r12
+ 1233 04aa DF92      		push r13
+ 1234 04ac EF92      		push r14
+ 1235 04ae FF92      		push r15
+ 1236 04b0 0F93      		push r16
+ 1237 04b2 1F93      		push r17
+ 1238 04b4 DF93      		push r29
+ 1239 04b6 CF93      		push r28
+ 1240 04b8 CDB7      		in r28,__SP_L__
+ 1241 04ba DEB7      		in r29,__SP_H__
+ 1242 04bc C054      		subi r28,lo8(-(-64))
+ 1243 04be D040      		sbci r29,hi8(-(-64))
+ 1244 04c0 0FB6      		in __tmp_reg__,__SREG__
+ 1245 04c2 F894      		cli
+ 1246 04c4 DEBF      		out __SP_H__,r29
+ 1247 04c6 0FBE      		out __SREG__,__tmp_reg__
+ 1248 04c8 CDBF      		out __SP_L__,r28
+ 1249               	/* prologue: function */
+ 1250               	/* frame size = 64 */
+ 232:main.c        ****     DDRB = 0xFF;
+ 1252               	.LM122:
+ 1253 04ca 8FEF      		ldi r24,lo8(-1)
+ 1254 04cc 87BB      		out 55-32,r24
+ 233:main.c        ****     DDRC = 0x00;
+ 1256               	.LM123:
+ 1257 04ce 14BA      		out 52-32,__zero_reg__
+ 234:main.c        **** 	PORTC = 0x00;
+ 1259               	.LM124:
+ 1260 04d0 15BA      		out 53-32,__zero_reg__
+ 236:main.c        ****     DDRD |= (1<<STECKDOSENPIN); // Output pin für Steckdosensteuerung
+ 1262               	.LM125:
+ 1263 04d2 8A9A      		sbi 49-32,2
+ 251:main.c        **** 	ADMUX = 0x00;
+ 1265               	.LM126:
+ 1266 04d4 17B8      		out 39-32,__zero_reg__
+ 252:main.c        **** 	ADMUX |= (1<<REFS1)| (1<<REFS0); // 0b01000000; // interne Ref-Spannung, avcc, pc0 als adc
+ 1268               	.LM127:
+ 1269 04d6 87B1      		in r24,39-32
+ 1270 04d8 806C      		ori r24,lo8(-64)
+ 1271 04da 87B9      		out 39-32,r24
+ 253:main.c        **** 	ADCSRA |= (1<<ADEN) | (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);
+ 1273               	.LM128:
+ 1274 04dc 86B1      		in r24,38-32
+ 1275 04de 8768      		ori r24,lo8(-121)
+ 1276 04e0 86B9      		out 38-32,r24
+ 266:main.c        ****     UBRRH = UBRR_VAL >> 8;
+ 1278               	.LM129:
+ 1279 04e2 10BC      		out 64-32,__zero_reg__
+ 267:main.c        ****     UBRRL = UBRR_VAL & 0xFF;
+ 1281               	.LM130:
+ 1282 04e4 83E3      		ldi r24,lo8(51)
+ 1283 04e6 89B9      		out 41-32,r24
+ 268:main.c        ****     UCSRB = (1<<RXCIE) | (1<<RXEN) | (1<<TXEN); 
+ 1285               	.LM131:
+ 1286 04e8 88E9      		ldi r24,lo8(-104)
+ 1287 04ea 8AB9      		out 42-32,r24
+ 270:main.c        ****     UCSRC = (1<<URSEL)|(1<<USBS)|(3<<UCSZ0);      //Asynchron 8N1
+ 1289               	.LM132:
+ 1290 04ec 8EE8      		ldi r24,lo8(-114)
+ 1291 04ee 80BD      		out 64-32,r24
+ 277:main.c        ****     sei();
+ 1293               	.LM133:
+ 1294               	/* #APP */
+ 1295               	 ;  277 "main.c" 1
+ 1296 04f0 7894      		sei
+ 1297               	 ;  0 "" 2
+ 1298               	/* #NOAPP */
+ 1299 04f2 20E0      		ldi r18,lo8(0)
+ 281:main.c        ****             get_string(stringbuffer);
+ 1301               	.LM134:
+ 1302 04f4 7E01      		movw r14,r28
+ 1303 04f6 0894      		sec
+ 1304 04f8 E11C      		adc r14,__zero_reg__
+ 1305 04fa F11C      		adc r15,__zero_reg__
+ 1306               	.LBB93:
+ 1307               	.LBB94:
+ 1308               	.LBB95:
+ 1309               	.LBB96:
+ 1311               	.Ltext7:
+ 1313               	.LM135:
+ 1314 04fc 50E2      		ldi r21,lo8(20000)
+ 1315 04fe 852E      		mov r8,r21
+ 1316 0500 5EE4      		ldi r21,hi8(20000)
+ 1317 0502 952E      		mov r9,r21
+ 1318               	.LBE96:
+ 1319               	.LBE95:
+ 1320               	.LBE94:
+ 1321               	.LBE93:
+ 1323               	.Ltext8:
+ 326:main.c        **** 		stringbuffer[0] = 'N';
+ 1325               	.LM136:
+ 1326 0504 4EE4      		ldi r20,lo8(78)
+ 1327 0506 B42E      		mov r11,r20
+ 1328               	.LBB100:
+ 1329               	.LBB101:
+ 1330               	.LBB102:
+ 1331               	.LBB103:
+ 1333               	.Ltext9:
+ 1335               	.LM137:
+ 1336 0508 38EC      		ldi r19,lo8(200)
+ 1337 050a C32E      		mov r12,r19
+ 1338 050c D12C      		mov r13,__zero_reg__
+ 1339               	.L109:
+ 1340               	.LBE103:
+ 1341               	.LBE102:
+ 1342               	.LBE101:
+ 1343               	.LBE100:
+ 1345               	.Ltext10:
+ 280:main.c        ****         if (uart_rx_flag==1 && buffer_full==0) {
+ 1347               	.LM138:
+ 1348 050e 8091 0000 		lds r24,uart_rx_flag
+ 1349 0512 8130      		cpi r24,lo8(1)
+ 1350 0514 01F4      		brne .L85
+ 1351 0516 2223      		tst r18
+ 1352 0518 01F4      		brne .L111
+ 1353               	.L86:
+ 281:main.c        ****             get_string(stringbuffer);
+ 1355               	.LM139:
+ 1356 051a C701      		movw r24,r14
+ 1357 051c 00D0      		rcall get_string
+ 1358               	.L111:
+ 1359 051e 21E0      		ldi r18,lo8(1)
+ 1360               	.L85:
+ 289:main.c        **** 	if(stringbuffer[0] == 'S'){
+ 1362               	.LM140:
+ 1363 0520 8981      		ldd r24,Y+1
+ 1364 0522 8335      		cpi r24,lo8(83)
+ 1365 0524 01F4      		brne .L87
+ 290:main.c        **** 		if(stringbuffer[1] == '1'){
+ 1367               	.LM141:
+ 1368 0526 8A81      		ldd r24,Y+2
+ 1369 0528 8133      		cpi r24,lo8(49)
+ 1370 052a 01F4      		brne .L109
+ 291:main.c        **** 			PORTC |= (1<<5);
+ 1372               	.LM142:
+ 1373 052c AD9A      		sbi 53-32,5
+ 1374 052e 00C0      		rjmp .L113
+ 1375               	.L87:
+ 297:main.c        **** 	}else if(stringbuffer[0] == 'U'){
+ 1377               	.LM143:
+ 1378 0530 8535      		cpi r24,lo8(85)
+ 1379 0532 01F4      		brne .L89
+ 298:main.c        **** 		if(stringbuffer[1] == '1'){
+ 1381               	.LM144:
+ 1382 0534 8A81      		ldd r24,Y+2
+ 1383 0536 8133      		cpi r24,lo8(49)
+ 1384 0538 01F4      		brne .L109
+ 299:main.c        **** 			PORTC &= ~(1<<5);
+ 1386               	.LM145:
+ 1387 053a AD98      		cbi 53-32,5
+ 1388               	.L113:
+ 300:main.c        **** 			send_ok();
+ 1390               	.LM146:
+ 1391 053c 00D0      		rcall send_ok
+ 1392 053e 00C0      		rjmp .L97
+ 1393               	.L89:
+ 304:main.c        **** 	}else if(stringbuffer[0] == 'G'){ // adc wert anfordern
+ 1395               	.LM147:
+ 1396 0540 8734      		cpi r24,lo8(71)
+ 1397 0542 01F4      		brne .L90
+ 305:main.c        **** 		ADCSRA |= (1<<ADSC);  //single conversion mode ein
+ 1399               	.LM148:
+ 1400 0544 369A      		sbi 38-32,6
+ 1401               	.L91:
+ 306:main.c        **** 		while(ADCSRA & (1<<ADSC));  //warten bis konvertierung abgeschlosen
+ 1403               	.LM149:
+ 1404 0546 3699      		sbic 38-32,6
+ 1405 0548 00C0      		rjmp .L91
+ 307:main.c        **** 		sampleValue = ADCW;
+ 1407               	.LM150:
+ 1408 054a 84B1      		in r24,36-32
+ 1409 054c 95B1      		in r25,(36)+1-32
+ 308:main.c        **** 		dtostrf( res2temp(adc2res(sampleValue)), 5, 2, stringbuffer );
+ 1411               	.LM151:
+ 1412 054e 00D0      		rcall adc2res
+ 1413 0550 00D0      		rcall res2temp
+ 1414 0552 45E0      		ldi r20,lo8(5)
+ 1415 0554 22E0      		ldi r18,lo8(2)
+ 1416 0556 8701      		movw r16,r14
+ 1417 0558 00D0      		rcall dtostrf
+ 309:main.c        **** 		strcat(stringbuffer, "\n\r");
+ 1419               	.LM152:
+ 1420 055a C701      		movw r24,r14
+ 1421 055c 60E0      		ldi r22,lo8(.LC0)
+ 1422 055e 70E0      		ldi r23,hi8(.LC0)
+ 1423 0560 00D0      		rcall strcat
+ 1424 0562 88EE      		ldi r24,lo8(1000)
+ 1425 0564 93E0      		ldi r25,hi8(1000)
+ 1426               	.L92:
+ 1427               	.LBB107:
+ 1428               	.LBB108:
+ 1429               	.LBB109:
+ 1430               	.LBB110:
+ 1432               	.Ltext11:
+ 1434               	.LM153:
+ 1435 0566 F601      		movw r30,r12
+ 1436               	/* #APP */
+ 1437               	 ;  105 "/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h" 1
+ 1438 0568 3197      		1: sbiw r30,1
+ 1439 056a 01F4      		brne 1b
+ 1440               	 ;  0 "" 2
+ 1441               	/* #NOAPP */
+ 1442               	.LBE110:
+ 1443               	.LBE109:
+ 1445               	.Ltext12:
    1:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay.h **** /* Copyright (c) 2002, Marek Michalkiewicz
    2:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay.h ****    Copyright (c) 2004,2005,2007 Joerg Wunsch
    3:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay.h ****    Copyright (c) 2007  Florin-Viorel Petrov
@@ -962,96 +1759,318 @@
  122:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay.h **** 			// wait 1/10 ms
  123:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay.h **** 			_delay_loop_2(((F_CPU) / 4e3) / 10);
  124:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay.h **** 			__ticks --;
- 690               	.LM74:
- 691 0266 0197      		sbiw r24,1
+ 1447               	.LM154:
+ 1448 056c 0197      		sbiw r24,1
  120:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay.h **** 		while(__ticks)
- 693               	.LM75:
- 694 0268 01F4      		brne .L29
- 695 026a 00C0      		rjmp .L36
- 696               	.L27:
- 697               	.LBE41:
- 698               	.LBE42:
- 699               	.LBB43:
- 700               	.LBB34:
- 701               	.LBB33:
- 702               	.LBB32:
- 704               	.Ltext7:
- 706               	.LM76:
- 707 026c C501      		movw r24,r10
- 708               	/* #APP */
- 709               	 ;  105 "/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h" 1
- 710 026e 0197      		1: sbiw r24,1
- 711 0270 01F4      		brne 1b
- 712               	 ;  0 "" 2
- 713               	/* #NOAPP */
- 714               	.LBE32:
- 715               	.LBE33:
- 716               	.LBE34:
- 717               	.LBE43:
- 719               	.Ltext8:
- 155:main.c        **** 	        if (uart_tx_flag==1 && buffer_full==1) {
- 721               	.LM77:
- 722 0272 8091 0000 		lds r24,uart_tx_flag
- 723 0276 8130      		cpi r24,lo8(1)
- 724 0278 01F4      		brne .L35
- 725 027a 2130      		cpi r18,lo8(1)
- 726 027c 01F0      		breq .+2
- 727 027e 00C0      		rjmp .L35
- 156:main.c        **** 	            strcat(stringbuffer, "\n\r");
- 729               	.LM78:
- 730 0280 C701      		movw r24,r14
- 731 0282 60E0      		ldi r22,lo8(.LC0)
- 732 0284 70E0      		ldi r23,hi8(.LC0)
- 733 0286 00D0      		rcall strcat
- 734               	.L36:
- 157:main.c        **** 	            put_string(stringbuffer); // zurücksenden
- 736               	.LM79:
- 737 0288 C701      		movw r24,r14
- 738 028a 00D0      		rcall put_string
- 739               	.L37:
- 740 028c 20E0      		ldi r18,lo8(0)
- 741 028e 00C0      		rjmp .L35
- 759               	.Lscope8:
- 760               	.global	uart_rx_flag
- 761               	.global	uart_rx_flag
- 762               		.section .bss
- 765               	uart_rx_flag:
- 766 0000 00        		.skip 1,0
- 767               	.global	uart_tx_flag
- 768               		.data
- 771               	uart_tx_flag:
- 772 0003 01        		.byte	1
- 775               	uart_tx_p.1721:
- 776 0004 0000      		.word	uart_tx_buffer
- 777               		.lcomm uart_rx_cnt.1709,1
- 778               		.comm uart_rx_buffer,256,1
- 779               		.comm uart_tx_buffer,256,1
- 786               		.text
- 788               	.Letext0:
- 789               	.global __do_copy_data
- 790               	.global __do_clear_bss
+ 1450               	.LM155:
+ 1451 056e 01F4      		brne .L92
+ 1452 0570 00C0      		rjmp .L112
+ 1453               	.L90:
+ 1454               	.LBE108:
+ 1455               	.LBE107:
+ 1457               	.Ltext13:
+ 313:main.c        **** 	}else if(stringbuffer[0] == 'L'){ // lichter schalten
+ 1459               	.LM156:
+ 1460 0572 8C34      		cpi r24,lo8(76)
+ 1461 0574 01F0      		breq .+2
+ 1462 0576 00C0      		rjmp .L93
+ 314:main.c        **** 		if(stringbuffer[2] == '1'){ // blaues Licht an
+ 1464               	.LM157:
+ 1465 0578 8B81      		ldd r24,Y+3
+ 1466 057a 8133      		cpi r24,lo8(49)
+ 1467 057c 01F4      		brne .L94
+ 316:main.c        **** 		        switchOn("11111", stringbuffer[1] - '0'); // 1st parameter: 1st 5 dip-switches, 2nd param
+ 1469               	.LM158:
+ 1470 057e 6A81      		ldd r22,Y+2
+ 1471 0580 70E0      		ldi r23,lo8(0)
+ 1472 0582 6053      		subi r22,lo8(-(-48))
+ 1473 0584 7040      		sbci r23,hi8(-(-48))
+ 1474 0586 80E0      		ldi r24,lo8(.LC1)
+ 1475 0588 90E0      		ldi r25,hi8(.LC1)
+ 1476 058a 00D0      		rcall switchOn
+ 1477 058c 88EE      		ldi r24,lo8(1000)
+ 1478 058e 93E0      		ldi r25,hi8(1000)
+ 1479               	.L95:
+ 1480               	.LBB111:
+ 1481               	.LBB112:
+ 1482               	.LBB113:
+ 1483               	.LBB114:
+ 1485               	.Ltext14:
+ 1487               	.LM159:
+ 1488 0590 F601      		movw r30,r12
+ 1489               	/* #APP */
+ 1490               	 ;  105 "/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h" 1
+ 1491 0592 3197      		1: sbiw r30,1
+ 1492 0594 01F4      		brne 1b
+ 1493               	 ;  0 "" 2
+ 1494               	/* #NOAPP */
+ 1495               	.LBE114:
+ 1496               	.LBE113:
+ 1498               	.Ltext15:
+ 1500               	.LM160:
+ 1501 0596 0197      		sbiw r24,1
+ 120:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay.h **** 		while(__ticks)
+ 1503               	.LM161:
+ 1504 0598 01F4      		brne .L95
+ 1505               	.LBE112:
+ 1506               	.LBE111:
+ 1508               	.Ltext16:
+ 318:main.c        **** 		        switchOn("11111", stringbuffer[1] - '0'); // 1st parameter: 1st 5 dip-switches, 2nd param
+ 1510               	.LM162:
+ 1511 059a 6A81      		ldd r22,Y+2
+ 1512 059c 70E0      		ldi r23,lo8(0)
+ 1513 059e 6053      		subi r22,lo8(-(-48))
+ 1514 05a0 7040      		sbci r23,hi8(-(-48))
+ 1515 05a2 80E0      		ldi r24,lo8(.LC1)
+ 1516 05a4 90E0      		ldi r25,hi8(.LC1)
+ 1517 05a6 00D0      		rcall switchOn
+ 1518 05a8 88EE      		ldi r24,lo8(1000)
+ 1519 05aa 93E0      		ldi r25,hi8(1000)
+ 1520               	.L96:
+ 1521               	.LBB115:
+ 1522               	.LBB116:
+ 1523               	.LBB117:
+ 1524               	.LBB118:
+ 1526               	.Ltext17:
+ 1528               	.LM163:
+ 1529 05ac F601      		movw r30,r12
+ 1530               	/* #APP */
+ 1531               	 ;  105 "/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h" 1
+ 1532 05ae 3197      		1: sbiw r30,1
+ 1533 05b0 01F4      		brne 1b
+ 1534               	 ;  0 "" 2
+ 1535               	/* #NOAPP */
+ 1536               	.LBE118:
+ 1537               	.LBE117:
+ 1539               	.Ltext18:
+ 1541               	.LM164:
+ 1542 05b2 0197      		sbiw r24,1
+ 120:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay.h **** 		while(__ticks)
+ 1544               	.LM165:
+ 1545 05b4 01F4      		brne .L96
+ 1546 05b6 00C0      		rjmp .L97
+ 1547               	.L94:
+ 1548               	.LBE116:
+ 1549               	.LBE115:
+ 1551               	.Ltext19:
+ 320:main.c        **** 		}else if(stringbuffer[2] == '0'){ // blaues Licht aus
+ 1553               	.LM166:
+ 1554 05b8 8033      		cpi r24,lo8(48)
+ 1555 05ba 01F4      		brne .L97
+ 321:main.c        **** 		        switchOff("11111", stringbuffer[1] - '0');
+ 1557               	.LM167:
+ 1558 05bc 6A81      		ldd r22,Y+2
+ 1559 05be 70E0      		ldi r23,lo8(0)
+ 1560 05c0 6053      		subi r22,lo8(-(-48))
+ 1561 05c2 7040      		sbci r23,hi8(-(-48))
+ 1562 05c4 80E0      		ldi r24,lo8(.LC1)
+ 1563 05c6 90E0      		ldi r25,hi8(.LC1)
+ 1564 05c8 00D0      		rcall switchOff
+ 1565 05ca 88EE      		ldi r24,lo8(1000)
+ 1566 05cc 93E0      		ldi r25,hi8(1000)
+ 1567               	.L98:
+ 1568               	.LBB119:
+ 1569               	.LBB106:
+ 1570               	.LBB105:
+ 1571               	.LBB104:
+ 1573               	.Ltext20:
+ 1575               	.LM168:
+ 1576 05ce F601      		movw r30,r12
+ 1577               	/* #APP */
+ 1578               	 ;  105 "/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h" 1
+ 1579 05d0 3197      		1: sbiw r30,1
+ 1580 05d2 01F4      		brne 1b
+ 1581               	 ;  0 "" 2
+ 1582               	/* #NOAPP */
+ 1583               	.LBE104:
+ 1584               	.LBE105:
+ 1586               	.Ltext21:
+ 1588               	.LM169:
+ 1589 05d4 0197      		sbiw r24,1
+ 120:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay.h **** 		while(__ticks)
+ 1591               	.LM170:
+ 1592 05d6 01F4      		brne .L98
+ 1593               	.LBE106:
+ 1594               	.LBE119:
+ 1596               	.Ltext22:
+ 323:main.c        **** 		        switchOff("11111", stringbuffer[1] - '0');
+ 1598               	.LM171:
+ 1599 05d8 6A81      		ldd r22,Y+2
+ 1600 05da 70E0      		ldi r23,lo8(0)
+ 1601 05dc 6053      		subi r22,lo8(-(-48))
+ 1602 05de 7040      		sbci r23,hi8(-(-48))
+ 1603 05e0 80E0      		ldi r24,lo8(.LC1)
+ 1604 05e2 90E0      		ldi r25,hi8(.LC1)
+ 1605 05e4 00D0      		rcall switchOff
+ 1606 05e6 88EE      		ldi r24,lo8(1000)
+ 1607 05e8 93E0      		ldi r25,hi8(1000)
+ 1608               	.L99:
+ 1609               	.LBB120:
+ 1610               	.LBB121:
+ 1611               	.LBB122:
+ 1612               	.LBB123:
+ 1614               	.Ltext23:
+ 1616               	.LM172:
+ 1617 05ea F601      		movw r30,r12
+ 1618               	/* #APP */
+ 1619               	 ;  105 "/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h" 1
+ 1620 05ec 3197      		1: sbiw r30,1
+ 1621 05ee 01F4      		brne 1b
+ 1622               	 ;  0 "" 2
+ 1623               	/* #NOAPP */
+ 1624               	.LBE123:
+ 1625               	.LBE122:
+ 1627               	.Ltext24:
+ 1629               	.LM173:
+ 1630 05f0 0197      		sbiw r24,1
+ 120:/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay.h **** 		while(__ticks)
+ 1632               	.LM174:
+ 1633 05f2 01F4      		brne .L99
+ 1634               	.L97:
+ 1635               	.LBE121:
+ 1636               	.LBE120:
+ 1638               	.Ltext25:
+ 326:main.c        **** 		stringbuffer[0] = 'N';
+ 1640               	.LM175:
+ 1641 05f4 B982      		std Y+1,r11
+ 1642 05f6 00C0      		rjmp .L110
+ 1643               	.L93:
+ 1644               	.LBB124:
+ 1645               	.LBB99:
+ 1646               	.LBB98:
+ 1647               	.LBB97:
+ 1649               	.Ltext26:
+ 1651               	.LM176:
+ 1652 05f8 C401      		movw r24,r8
+ 1653               	/* #APP */
+ 1654               	 ;  105 "/usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h" 1
+ 1655 05fa 0197      		1: sbiw r24,1
+ 1656 05fc 01F4      		brne 1b
+ 1657               	 ;  0 "" 2
+ 1658               	/* #NOAPP */
+ 1659               	.LBE97:
+ 1660               	.LBE98:
+ 1661               	.LBE99:
+ 1662               	.LBE124:
+ 1664               	.Ltext27:
+ 330:main.c        **** 	        if (uart_tx_flag==1 && buffer_full==1) {
+ 1666               	.LM177:
+ 1667 05fe 8091 0000 		lds r24,uart_tx_flag
+ 1668 0602 8130      		cpi r24,lo8(1)
+ 1669 0604 01F0      		breq .+2
+ 1670 0606 00C0      		rjmp .L109
+ 1671 0608 2130      		cpi r18,lo8(1)
+ 1672 060a 01F0      		breq .+2
+ 1673 060c 00C0      		rjmp .L109
+ 331:main.c        **** 	            strcat(stringbuffer, "\n\r");
+ 1675               	.LM178:
+ 1676 060e C701      		movw r24,r14
+ 1677 0610 60E0      		ldi r22,lo8(.LC0)
+ 1678 0612 70E0      		ldi r23,hi8(.LC0)
+ 1679 0614 00D0      		rcall strcat
+ 1680               	.L112:
+ 332:main.c        **** 	            put_string(stringbuffer); // zurücksenden
+ 1682               	.LM179:
+ 1683 0616 C701      		movw r24,r14
+ 1684 0618 00D0      		rcall put_string
+ 1685               	.L110:
+ 1686 061a 20E0      		ldi r18,lo8(0)
+ 1687 061c 00C0      		rjmp .L109
+ 1729               	.Lscope20:
+ 1730               	.global	uart_rx_flag
+ 1731               	.global	uart_rx_flag
+ 1732               		.section .bss
+ 1735               	uart_rx_flag:
+ 1736 0000 00        		.skip 1,0
+ 1737               	.global	uart_tx_flag
+ 1738               		.data
+ 1741               	uart_tx_flag:
+ 1742 0009 01        		.byte	1
+ 1743               	.global	nRepeatTransmit
+ 1746               	nRepeatTransmit:
+ 1747 000a 0A00      		.word	10
+ 1748               	.global	nProtocol
+ 1751               	nProtocol:
+ 1752 000c 0100      		.word	1
+ 1753               	.global	nPulseLength
+ 1756               	nPulseLength:
+ 1757 000e 5E01      		.word	350
+ 1760               	uart_tx_p.1851:
+ 1761 0010 0000      		.word	uart_tx_buffer
+ 1762               		.lcomm uart_rx_cnt.1839,1
+ 1763               		.lcomm sReturn.1739,13
+ 1764               	.LC2:
+ 1765 0012 4646 4646 		.string	"FFFFF"
+ 1765      4600 
+ 1766               	.LC3:
+ 1767 0018 3046 4646 		.string	"0FFFF"
+ 1767      4600 
+ 1768               	.LC4:
+ 1769 001e 4630 4646 		.string	"F0FFF"
+ 1769      4600 
+ 1770               	.LC5:
+ 1771 0024 4646 3046 		.string	"FF0FF"
+ 1771      4600 
+ 1772               	.LC6:
+ 1773 002a 4646 4630 		.string	"FFF0F"
+ 1773      4600 
+ 1774               	.LC7:
+ 1775 0030 4646 4646 		.string	"FFFF0"
+ 1775      3000 
+ 1778               	C.9.1749:
+ 1779 0036 0000      		.word	.LC2
+ 1780 0038 0000      		.word	.LC3
+ 1781 003a 0000      		.word	.LC4
+ 1782 003c 0000      		.word	.LC5
+ 1783 003e 0000      		.word	.LC6
+ 1784 0040 0000      		.word	.LC7
+ 1785               		.lcomm bin.1671,64
+ 1786               		.comm uart_rx_buffer,256,1
+ 1787               		.comm uart_tx_buffer,256,1
+ 1799               		.text
+ 1801               	.Letext0:
+ 1802               	.global __do_copy_data
+ 1803               	.global __do_clear_bss
 DEFINED SYMBOLS
                             *ABS*:00000000 main.c
-     /tmp/cckCjlak.s:2      *ABS*:0000003f __SREG__
-     /tmp/cckCjlak.s:3      *ABS*:0000003e __SP_H__
-     /tmp/cckCjlak.s:4      *ABS*:0000003d __SP_L__
-     /tmp/cckCjlak.s:5      *ABS*:00000034 __CCP__
-     /tmp/cckCjlak.s:6      *ABS*:00000000 __tmp_reg__
-     /tmp/cckCjlak.s:7      *ABS*:00000001 __zero_reg__
-     /tmp/cckCjlak.s:92     .text:00000000 adc2res
-     /tmp/cckCjlak.s:156    .text:0000005e res2temp
-     /tmp/cckCjlak.s:190    .text:00000082 __vector_11
-     /tmp/cckCjlak.s:765    .bss:00000000 uart_rx_flag
-                             .bss:00000001 uart_rx_cnt.1709
+     /tmp/ccjpo4uT.s:2      *ABS*:0000003f __SREG__
+     /tmp/ccjpo4uT.s:3      *ABS*:0000003e __SP_H__
+     /tmp/ccjpo4uT.s:4      *ABS*:0000003d __SP_L__
+     /tmp/ccjpo4uT.s:5      *ABS*:00000034 __CCP__
+     /tmp/ccjpo4uT.s:6      *ABS*:00000000 __tmp_reg__
+     /tmp/ccjpo4uT.s:7      *ABS*:00000001 __zero_reg__
+     /tmp/ccjpo4uT.s:92     .text:00000000 adc2res
+     /tmp/ccjpo4uT.s:156    .text:0000005e res2temp
+     /tmp/ccjpo4uT.s:192    .text:00000082 dec2binWzerofill
+     /tmp/ccjpo4uT.s:1763   .bss:0000000f bin.1671
+     /tmp/ccjpo4uT.s:316    .text:0000010c transmit
+     /tmp/ccjpo4uT.s:1756   .data:0000000e nPulseLength
+     /tmp/ccjpo4uT.s:426    .text:00000162 send0
+     /tmp/ccjpo4uT.s:1751   .data:0000000c nProtocol
+     /tmp/ccjpo4uT.s:462    .text:00000190 send1
+     /tmp/ccjpo4uT.s:498    .text:000001be sendT0
+     /tmp/ccjpo4uT.s:527    .text:000001d4 sendT1
+     /tmp/ccjpo4uT.s:556    .text:000001ea sendTF
+     /tmp/ccjpo4uT.s:585    .text:00000200 sendSync
+     /tmp/ccjpo4uT.s:623    .text:0000022e getCodeWordA
+     /tmp/ccjpo4uT.s:1778   .data:00000036 C.9.1749
+     /tmp/ccjpo4uT.s:1762   .bss:00000002 sReturn.1739
+     /tmp/ccjpo4uT.s:814    .text:00000320 sendTriState
+     /tmp/ccjpo4uT.s:1746   .data:0000000a nRepeatTransmit
+     /tmp/ccjpo4uT.s:897    .text:00000378 switchOn
+     /tmp/ccjpo4uT.s:919    .text:00000380 switchOff
+     /tmp/ccjpo4uT.s:939    .text:00000388 __vector_11
+     /tmp/ccjpo4uT.s:1735   .bss:00000000 uart_rx_flag
+                             .bss:00000001 uart_rx_cnt.1839
                             *COM*:00000100 uart_rx_buffer
-     /tmp/cckCjlak.s:271    .text:000000e2 __vector_12
-     /tmp/cckCjlak.s:775    .data:00000004 uart_tx_p.1721
+     /tmp/ccjpo4uT.s:1020   .text:000003e8 __vector_12
+     /tmp/ccjpo4uT.s:1760   .data:00000010 uart_tx_p.1851
                             *COM*:00000100 uart_tx_buffer
-     /tmp/cckCjlak.s:771    .data:00000003 uart_tx_flag
-     /tmp/cckCjlak.s:360    .text:0000013c get_string
-     /tmp/cckCjlak.s:389    .text:00000154 put_string
-     /tmp/cckCjlak.s:419    .text:0000016c send_ok
-     /tmp/cckCjlak.s:474    .text:0000019c main
+     /tmp/ccjpo4uT.s:1741   .data:00000009 uart_tx_flag
+     /tmp/ccjpo4uT.s:1109   .text:00000442 get_string
+     /tmp/ccjpo4uT.s:1138   .text:0000045a put_string
+     /tmp/ccjpo4uT.s:1168   .text:00000472 send_ok
+     /tmp/ccjpo4uT.s:1225   .text:000004a2 main
 
 UNDEFINED SYMBOLS
 __floatsisf

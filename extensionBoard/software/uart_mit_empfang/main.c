@@ -235,17 +235,16 @@ int main (void) {
     //DDRD = 0xFF;
     DDRD |= (1<<STECKDOSENPIN); // Output pin für Steckdosensteuerung
 
-	/*
 	// FIXME: this is how you control a power outlet
+/*
     int mytmp = 0;
-    for(mytmp=0;mytmp<100;mytmp++){
-        switchOn("11001", 2); // 1st parameter: 1st 5 dip-switches, 2nd parameter: the one switch that is on!
+    for(mytmp=0;mytmp<4;mytmp++){
+        switchOn("11111", 4); // 1st parameter: 1st 5 dip-switches, 2nd parameter: the one switch that is on!
         _delay_ms(10000);
-        switchOff("11001", 2);
+        switchOff("11111", 4);
         _delay_ms(10000);
     }
-	*/
-
+*/
 
     //DDRD = (DDRD|0x01);
 
@@ -278,8 +277,6 @@ int main (void) {
     sei();
 
     while(1) {
-
-
         if (uart_rx_flag==1 && buffer_full==0) {
             get_string(stringbuffer);
             buffer_full=1;
@@ -313,9 +310,23 @@ int main (void) {
 		_delay_ms(100);
 		put_string(stringbuffer);
 		buffer_full = 0;
+	}else if(stringbuffer[0] == 'L'){ // lichter schalten
+		if(stringbuffer[2] == '1'){ // blaues Licht an
+			// TOBI
+		        switchOn("11111", stringbuffer[1] - '0'); // 1st parameter: 1st 5 dip-switches, 2nd parameter: the one switch that is on!
+			_delay_ms(100);
+		        switchOn("11111", stringbuffer[1] - '0'); // 1st parameter: 1st 5 dip-switches, 2nd parameter: the one switch that is on!
+			_delay_ms(100);
+		}else if(stringbuffer[2] == '0'){ // blaues Licht aus
+		        switchOff("11111", stringbuffer[1] - '0');
+			_delay_ms(100);
+		        switchOff("11111", stringbuffer[1] - '0');
+			_delay_ms(100);
+		}	
+		stringbuffer[0] = 'N';
+		buffer_full = 0;
 	}else{
 		_delay_ms(10);
-
 	        if (uart_tx_flag==1 && buffer_full==1) {
 	            strcat(stringbuffer, "\n\r");
 	            put_string(stringbuffer); // zurücksenden

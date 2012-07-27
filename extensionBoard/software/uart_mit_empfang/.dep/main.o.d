@@ -15,7 +15,8 @@ main.o: main.c /usr/lib/gcc/avr/4.3.5/../../../avr/include/string.h \
   /usr/lib/gcc/avr/4.3.5/../../../avr/include/util/delay_basic.h \
   /usr/lib/gcc/avr/4.3.5/../../../avr/include/stdlib.h \
   /usr/lib/gcc/avr/4.3.5/../../../avr/include/stdio.h \
-  /usr/lib/gcc/avr/4.3.5/include/stdarg.h
+  /usr/lib/gcc/avr/4.3.5/include/stdarg.h \
+  /usr/lib/gcc/avr/4.3.5/include/stdbool.h
 
 /usr/lib/gcc/avr/4.3.5/../../../avr/include/string.h:
 
@@ -52,3 +53,5 @@ main.o: main.c /usr/lib/gcc/avr/4.3.5/../../../avr/include/string.h \
 /usr/lib/gcc/avr/4.3.5/../../../avr/include/stdio.h:
 
 /usr/lib/gcc/avr/4.3.5/include/stdarg.h:
+
+/usr/lib/gcc/avr/4.3.5/include/stdbool.h:
