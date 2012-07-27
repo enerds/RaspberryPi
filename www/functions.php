@@ -1,5 +1,4 @@
 <?php
-
 	function getAlarm(){
 		include 'include.php';
 		$dbh = mysql_connect($host, $usr, $pwd) or die("Could not connect");
@@ -112,6 +111,16 @@
 					exec("/usr/bin/pinset 1 1 ".$_POST["pwm"]);
 				}
 				break;
+			case 'getADC':
+				if(isset($_POST["pin"])){
+					//$cmd = 'echo -en "G\r" > /dev/ttyAMA0 ; read -n4 RESPONSE < /dev/ttyAMA0 ; echo $RESPONSE';
+					$cmd = "serial";
+					$output = shell_exec($cmd);
+					echo $output;
+				}else{
+					echo "Err: No Pin supplied";
+				}
+				break;
 			case 'setPinValue':
 				if(!isset($_POST["pin"])){
 					echo "Err: No Pin supplied";
@@ -122,8 +131,7 @@
 					$pin = $_POST["pin"];
 					if($pin == 17 || $pin == 18 || $pin == 21 || $pin == 22 || $pin == 23 || $pin == 24 || $pin == 25){
 						if($onoff >= 0 && $onoff <= 1){
-							//exec("/usr/bin/pinset 0 ".$pin." ".$onoff);
-                            exec("echo \"".$onoff."\" > /sys/class/gpio".$pin."/value");
+                            				exec("echo ".$onoff." > /sys/class/gpio/gpio".$pin."/value");
 							echo "OK";
 						}else{
 							echo "Err: Invalid pin setting";

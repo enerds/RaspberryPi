@@ -75,11 +75,19 @@ std::vector<char> Serial::receive(){
 }
 
 
-std::vector<char> Serial::sendReceive(char x){
-	char message[2];
-	message[0] = x;
-	message[1] = '\r';
-	int checkback = write(fd, message, 2);
+std::vector<char> Serial::sendReceive(std::vector<char> x){
+	char message[255];
+	int y=0;
+	for(y=0; y < x.size(); y++){
+		message[y] = x[y];
+		std::cout << "message[" << y << "] = " << x[y] << std::endl;
+	}
+	std::cout << "message[" << y << "] = RETURN " << std::endl;
+	message[y] = '\r';
+	//message[0] = x;
+	//message[1] = '\r';
+	cout << "sending message with size: " << x.size()+1 << endl;
+	int checkback = write(fd, message, x.size()+1);
 
 	std::vector<char> code = receive();
 

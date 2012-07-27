@@ -30,6 +30,17 @@
 				});
 			});
 
+			function getADC(pin){
+				$.post("functions.php",{
+					func: 'getADC',
+					pin:0
+				},
+				function(html){
+					$("#result").html(">> " + html + " C");
+				})
+			}
+					
+
 			function setPWM(value){
 				$.post("functions.php",{
 					func: 'setPWM',
@@ -153,10 +164,9 @@
 		<div class="main">
 			<!-- PIN BUTTONS -->
 			<div class="set">
-				<h2>Read Pin values (not functional atm)</h2>
+				<h2>Read Pin values (only ADC of PC0)</h2>
 				<!-- Way to call the functions -->
-				<span class="button" onclick="getPinValue(0)">Test Pin Value 0</span>
-				<span class="button" onclick="getPinValue(1)">Test Pin Value 1</span><br /><br />
+				<span class="button" onclick="getADC(0)">Test ADC Value 0</span>
 
 				<!-- div in which the results get displayed -->
 				<div id="result" style="width:200px;border:1px dotted black;">&gt;&gt;</div>
