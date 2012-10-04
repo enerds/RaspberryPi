@@ -17,6 +17,7 @@ int main(int argc, char* argv[]){
 	if(argc < 2){
 		int x = 0;
 		while(response.size() == 0){
+			request.clear();
 			request.push_back('G');
 			response = mySerial.sendReceive(request);
 		}
@@ -26,7 +27,7 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	cout << "Argument-count argc: " << argc << endl;
+	//cout << "Argument-count argc: " << argc << endl;
 	if(argc == 4){
 		if(strcmp(argv[1], "L") == 0){
 			 if(strcmp(argv[3], "0") == 0){

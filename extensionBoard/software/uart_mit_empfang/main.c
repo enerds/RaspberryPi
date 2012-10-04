@@ -228,41 +228,25 @@ int main (void) {
     char * charpointer;     // Hilfszeiger
 	int sampleValue = 0;
 
-    // IO konfigurieren
+    // IO CONFIG
     DDRB = 0xFF;
     DDRC = 0x00;
-	PORTC = 0x00;
-    //DDRD = 0xFF;
+    PORTC = 0x00;
     DDRD |= (1<<STECKDOSENPIN); // Output pin für Steckdosensteuerung
 
-	// FIXME: this is how you control a power outlet
-/*
-    int mytmp = 0;
-    for(mytmp=0;mytmp<4;mytmp++){
-        switchOn("11111", 4); // 1st parameter: 1st 5 dip-switches, 2nd parameter: the one switch that is on!
-        _delay_ms(10000);
-        switchOff("11111", 4);
-        _delay_ms(10000);
-    }
-*/
-
-    //DDRD = (DDRD|0x01);
-
+	// ADC
 	ADMUX = 0x00;
 	ADMUX |= (1<<REFS1)| (1<<REFS0); // 0b01000000; // interne Ref-Spannung, avcc, pc0 als adc
 	ADCSRA |= (1<<ADEN) | (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);
 
 
-    // Servo konfigurieren
-    // Werte für OCR1A: zw. 650 und 1900!
-    /*
+    // PWM
     ICR1=10000;
     TCCR1A|=(0<<COM1A0)|(1<<COM1A1)|(0<<COM1B0)|(0<<COM1B1)|(0<<FOC1A)|(0<<FOC1B)|(1<<WGM11)|(0<<WGM10);
     TCCR1B|=(0<<ICNC1)|(0<<ICES1)|(1<<WGM13)|(1<<WGM12)|(0<<CS12)|(1<<CS11)|(0<<CS10);
     OCR1A = 1300;
-    */
 
-    // UART konfigurieren
+    // UART
     UBRRH = UBRR_VAL >> 8;
     UBRRL = UBRR_VAL & 0xFF;
     UCSRB = (1<<RXCIE) | (1<<RXEN) | (1<<TXEN); 
@@ -276,41 +260,123 @@ int main (void) {
     // Interrupts freigeben
     sei();
 
+	int up = 1;
+	int was_up = 0;
+	
+
     while(1) {
+	if(up){
+		OCR1A += 10;
+		if(OCR1A >= 2000){
+			up = 0;
+		}
+	}else{
+		OCR1A -= 8;
+		if(OCR1A <= 200){
+			up = 1;
+		}
+	}
+			
+
         if (uart_rx_flag==1 && buffer_full==0) {
             get_string(stringbuffer);
             buffer_full=1;
         }
 
-	/*
-	 * zum testen, falls "S1" gesendet wurde,
-	 * schalte Pin C0 ein
-	 */
+	/* SET PINS AS INPUT OR OUTPUT */
+	if(stringbuffer[0] == 'P'){ // configure a pin
+		if(stringbuffer[1] == 'B'){
+			if(stringbuffer[3] == '1'){ // set as output
+				DDRB |= (1 << ((int)stringbuffer[2]-48));
+			}else{
+				DDRB &= ~(1 << ((int)stringbuffer[2]-48));
+			}
+		}
+		if(stringbuffer[1] == 'C'){
+			if(stringbuffer[3] == '1'){
+				DDRC |= (1 << ((int)stringbuffer[2]-48));
+			}else{
+				DDRC &= ~(1 << ((int)stringbuffer[2]-48));
+			}
+		}
+		if(stringbuffer[1] == 'D'){
+			if(stringbuffer[3] == '1'){
+				DDRD |= (1 << ((int)stringbuffer[2]-48));
+			}else{
+				DDRD &= ~(1 << ((int)stringbuffer[2]-48));
+			}
+		}
+		send_ok();
+	}
+
+	/* SET PIN HIGH OR LOW */
 	if(stringbuffer[0] == 'S'){
-		if(stringbuffer[1] == '1'){
-			PORTC |= (1<<5);
-			send_ok();
-			// put other char in there to not trigger it again
-			stringbuffer[0] = 'N';
-			buffer_full = 0;
-		}	
-	}else if(stringbuffer[0] == 'U'){
-		if(stringbuffer[1] == '1'){
-			PORTC &= ~(1<<5);
-			send_ok();
+		if(stringbuffer[1] == 'B'){
+			if(stringbuffer[3] == '1'){
+				PORTB |= (1 << ((int)stringbuffer[2]-48));
+			}else{
+				PORTB &= ~(1 << ((int)stringbuffer[2]-48));
+			}
+		}
+		if(stringbuffer[1] == 'C'){
+			if(stringbuffer[3] == '1'){
+				PORTC |= (1 << ((int)stringbuffer[2]-48));
+			}else{
+				PORTC &= ~(1 << ((int)stringbuffer[2]-48));
+			}
+		}
+		if(stringbuffer[1] == 'D'){
+			if(stringbuffer[3] == '1'){
+				PORTD |= (1 << ((int)stringbuffer[2]-48));
+			}else{
+				PORTD &= ~(1 << ((int)stringbuffer[2]-48));
+			}
+		}
+		send_ok();
+	}
+
+	/* GET ADC VALUE */
+	if(stringbuffer[0] == 'G'){ // adc wert anfordern
+		if(stringbuffer[1] == 'C'){
+			// SELECT CHANNEL
+			ADMUX = 0x00;
+			ADMUX |= (1<<REFS1)| (1<<REFS0); // 0b01000000; // interne Ref-Spannung, avcc, pc0 als adc
+
+			if(stringbuffer[2] == '1'){
+				ADMUX |= (1<<MUX0);
+			}
+			if(stringbuffer[2] == '2'){
+				ADMUX |= (1<<MUX1);
+			}
+			if(stringbuffer[2] == '3'){
+				ADMUX |= (1<<MUX0) | (1<<MUX1);
+			}
+			if(stringbuffer[2] == '4'){
+				ADMUX |= (1<<MUX2);
+			}
+			if(stringbuffer[2] == '5'){
+				ADMUX |= (1<<MUX0) | (1<<MUX2);
+			}
+
+			// START ADC
+			ADCSRA |= (1<<ADSC);
+			while(ADCSRA & (1 << ADSC));  //warten bis konvertierung abgeschlosen
+			sampleValue = ADCW;
+			//dtostrf( res2temp(adc2res(sampleValue)), 5, 2, stringbuffer );
+
+			itoa(sampleValue,stringbuffer,10);
+			strcat(stringbuffer, "\n\r");
+
+			_delay_ms(100);
+			put_string(stringbuffer);
+
 			stringbuffer[0] = 'N';
 			buffer_full = 0;
 		}
-	}else if(stringbuffer[0] == 'G'){ // adc wert anfordern
-		ADCSRA |= (1<<ADSC);  //single conversion mode ein
-		while(ADCSRA & (1<<ADSC));  //warten bis konvertierung abgeschlosen
-		sampleValue = ADCW;
-		dtostrf( res2temp(adc2res(sampleValue)), 5, 2, stringbuffer );
-		strcat(stringbuffer, "\n\r");
-		_delay_ms(100);
-		put_string(stringbuffer);
-		buffer_full = 0;
-	}else if(stringbuffer[0] == 'L'){ // lichter schalten
+	}
+
+	/* LIGHTS */
+	if(stringbuffer[0] == 'L'){ // lichter schalten
 		if(stringbuffer[2] == '1'){ // blaues Licht an
 			// TOBI
 		        switchOn("11111", stringbuffer[1] - '0'); // 1st parameter: 1st 5 dip-switches, 2nd parameter: the one switch that is on!
@@ -325,14 +391,25 @@ int main (void) {
 		}	
 		stringbuffer[0] = 'N';
 		buffer_full = 0;
-	}else{
+	}
+
+
+	// send back if received something
 		_delay_ms(10);
 	        if (uart_tx_flag==1 && buffer_full==1) {
 	            strcat(stringbuffer, "\n\r");
 	            put_string(stringbuffer); // zurücksenden
+		    stringbuffer[0] = 'N';
 	            buffer_full=0; // Buffer ist wieder verfügbar
 	        }
+
+	// clear stringbuffer!	
+	int i=0;
+	for(i=0;i<64;i++){
+		stringbuffer[i] = '\0';
 	}
+
+	buffer_full = 0;
     }
 }
 
