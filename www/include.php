@@ -1,8 +1,8 @@
 <?php
-	$usr = "pi";
-	$pwd = "Twe28+-";
+	$usr = "****";
+	$pwd = "****";
 	$host = "127.0.0.1"; 
-	$db = "rpi";
+	$db = "****";
 
 	// pin definitions of the atmega8
 	$atm8digout = array("PD3", "PD4", "PD5", "PD6", "PD7", "PB5", "PB4", "PB3", "PB2", "PB1", "PB0",
