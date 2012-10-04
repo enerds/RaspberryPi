@@ -1,0 +1,6 @@
+<?php
+
+$MPD_PORT = 6600;
+$MPD_HOST = "localhost";
+
+?>

@@ -1,0 +1,71 @@
+
+
+    PHPMusicPlayer+ v0.2.3
+    ----------------------
+
+    Installation: copy files and go to http://myserver/phpmpplus/config.php. You can go
+    to http://myserver/phpmpplus/install.php to add PhpMP+ to your sidebar.
+
+    Copyright: This software is copyright (c) 2004 BohwaZ <bohwaz at tilt.eu.org>
+    and is licensed under GNU/GPL that can be read at www.gnu.org.
+
+
+    TODO-List:
+    - Administration rights: password, users...
+    - Find function
+    - Add some themes
+    - Could copy MPD DB to MySQL one and using it for new features like:
+       - Rating songs for users
+       - Generate playlists using most rated songs
+      (if MPD don't implement song rating before?)
+    - Improve the use of MPD-passwords
+
+
+    * Please report bugs to bohwaz at tilt.eu.org or in the www.musicpd.org forum *
+
+
+    CHANGELOG
+    ---------
+
+    0.1.0
+        Initial private release based on PhpMP
+
+    0.2.0
+        First public release using MPD PHP Class from Benjamin Carlisle
+        There's no more part of PhpMP in this version.
+        - Music files browser (adding items by checking them in the list)
+        - Configuration, Full playlist and about dialog
+        - Ready to international with PHP GNU/GetText functions to display text
+        - Using Strict xHML 1.0/CSS2 and DOM/ECMAScript
+
+    0.2.1
+        - Using MPD Class 1.2 instead of 1.1
+        - Search function in Music browser
+        - Corrected some visual bugs
+
+    0.2.2
+        - GNU/Gettext internationalization is now ready (but don't work for me)
+        - Corrected Mozilla CSS bugs
+        - Seekbar and time elapsed are now dynamically updated by javascript
+          (no more need to have low refresh frequency! and the player looks better to UI-based players)
+        - Corrected some bugs in Music Browser
+
+    0.2.3
+        - Corrected time interpreter in About dialog
+        - Gettext localization replaced with home-made one (Gettext seems to be very buggy)
+        - Translated to French
+        - Change the volume bar to seek in it like in seek bar (thanks csak for idea)
+        - Merged Play and Pause buttons (thanks Sunshine for idea)
+        - Corrected Mozilla CSS bugs (again)
+        - Allow users to customize client (using cookie)
+        - MPD passwords are implemented
+        - The client configuration is now password-protected
+        - Corrected bugs when playing a livestream (continuous loading etc.)
+        - Possibility to configure displaying of song titles
+        - Finally the player stills refresh when it's paused or stopped (thanks to nosferat)
+        - New script to generate a template to create new translations (in lang/generate.php)
+        - Compatibility with error_level set to E_ALL in PHP
+        - Possibility to add streams to playlist (and corrected some bugs when playing a stream)
+        - The playlist editor replace the playlist viewer
+        - Added a bitrate viewing when playing a song (but don't works very well with VBR files...)
+        - Added a page to install PhpMP+ in sidebar in one click (thanks to nosferat)

@@ -1,0 +1,35 @@
+* { margin: 0; padding: 0; }
+body { font-family: Arial, Helvetica, sans-serif; margin-top: 16px; }
+h1 { font-size: 20px; text-transform: lowercase; letter-spacing: 0.1em; position: absolute; top: -2px; left: 2px; line-height: 20px; }
+a { text-decoration: none; color: blue; }
+a:hover { color: red; text-decoration: underline; }
+#list { list-style-type: none; margin-top: 6px; font-size: 10px; margin-left: 5px; clear: both; }
+#list li { clear: both; }
+#list .commands {
+    display: block; float: right;
+    width: 35%;
+}
+#list .song {
+    display: block;
+    float: left;
+    width: 65%;
+    overflow: hidden;
+    height: 1.3em;
+}
+#list .commands a {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+#list .commands a:hover {
+    color: red; text-decoration: underline;
+}
+#list .song a { display: block; text-decoration: none; color: #000; }
+#list li.odd a { background: #eef; }
+#list li#current a { background: #fcc; }
+#list li:hover a { background: #ccf; }
+
+ul#commands { margin-top: 2em; margin-left: 0.3em; }
+.addstream { float: right; margin-right: 1em; }
+.show a { margin-right: 0.5em; }
+
+ul { list-style-type: none; }

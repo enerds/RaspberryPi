@@ -1,0 +1,62 @@
+
+/* Background Color */
+.col_background 		{ background-color:#3D3C47; }/* { background-color:#92959B; } */
+
+/* Colors for Links */
+.col_links_link 		{ background-color:#EEEEEE; }
+.col_links_active 		{ background-color:#EEEEEE; }
+.col_links_visual 		{ background-color:#EEEEEE; }
+
+/* Colors for Directories */
+.col_directories_title 	{ background-image: url(images/th_background.gif); } /*{ background-color:#666666; }*/
+.col_directories_body_0	{  } /* background-color:#8B9596; */
+.col_directories_body_1	{  } /* background-color:#737C7D; */
+
+/* Colors for Music */
+.col_music_title 		{ background-image: url(images/th_background.gif); } /*{ background-color:#666666; }*/
+.col_music_body_0		{  } /* background-color:#8B9596; */
+.col_music_body_1		{  } /* background-color:#737C7D; */
+.col_music_sort 		{  } /* background-color:#666666; */
+
+/* Colors for current Playlist Table */
+.col_playlist_title 	{ background-image: url(images/th_background.gif); } /*{ background-color:#666666; }*/
+.col_playlist_body 		{  } /* background-color:#3D3C47; */
+.col_playlist_current 	{  } /* background-color:#737C7D; */
+
+/* Colors for Pssword */
+.col_password_title 	{ background-color:#cccccc; }
+.col_password_body 		{ background-color:#eeeeee; }
+
+/* Colors for Playing */
+.col_playing_title 		{ background-image: url(images/th_background.gif); } /*{ background-color:#737C7D; }*/
+.col_playing_body 		{ background-color:#737C7D; }
+.col_playing_on 		{ background-color:#ffffff; }
+
+/* Colors for Volume */
+.col_volume_body 		{ background-color:#8B9596; }
+.col_volume_unselected 	{ background-color:#eeeeee; }
+.col_volume_background 	{ background-color:#ffffff; }
+.col_volume_foreground 	{ background-color:#000000; }
+
+/* Colors for Time Progress Bar */
+.col_time_background 	{ background-color:#EEEEEE; }
+.col_time_foreground 	{ background-color:#000000; }
+
+body 			{ font-family:sans-serif; font-size:11pt; color:#DDDDDD; padding:0px; margin:0px; }
+td	 			{ font-family:sans-serif; font-size:11pt; color:#DDDDDD}
+table			{ width:100%; }
+img 			{ border: none; }
+img.small 		{ width:35px; height:35px; }
+td.big	 		{ width:35px; }
+a:link 			{ text-decoration:none; color:#EEEEEE;  font-size:11pt; font-weight:bold;}
+a:visited 		{ text-decoration:none; color:#EEEEEE;  font-size:11pt; font-weight:bold;}
+a:hover 		{ text-decoration:none; color:#EEEEEE;  font-size:11pt; font-weight:bold;}
+a:active 		{ text-decoration:none; color:#EEEEEE;  font-size:11pt; font-weight:bold;}
+a:focus 		{ text-decoration:none; color:#EEEEEE;  font-size:11pt; font-weight:bold;}
+div#chase		{ background-color:#333333; position:relative;  opacity: 0.8; -moz-opacity:0.8; -khtml-opacity:0.8; filter:alpha(opacity=80); } /* background-color:#1F3768; */
+/* .control_bg		{ background-image: url(images/control_background.gif);background-position:top; } */
+.active_control_bg		{ background-color:#666666; } 
+/*.button_bg		{ background-image: url(images/button_background.gif);background-position:top; } */
+.sf				{ font-size:11pt; font-weight:bold; }
+.vsf			{ font-size:10pt; }
+.semitrans		{ opacity: 0.95; -moz-opacity:0.95; -khtml-opacity:0.95; filter:alpha(opacity=95); }

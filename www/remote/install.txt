@@ -1,0 +1,86 @@
+
+...::::::	phpMpReloded	....::::::
+
+	I N S T A L L
+	
+	
+------------	
+Requirements
+------------
+
+	- web server with php
+		- apache	
+		- php
+				 
+	- Music Player Daemon -- http://mpd.wikia.com/wiki/
+	
+	
+------------	
+installation
+------------ 
+
+Depending on the distribution different installation routines are available:
+	
+	1.) Linux Mandriva/Redhat
+	2.) Linux Ubuntu 
+
+
+Anything doesn't work as discribed? contact us via the mailing list
+	
+	https://lists.sourceforge.net/lists/listinfo/phpmpreloaded-team 
+
+
+1.) Installation for Mandriva/Redhat
+
+	a) download the file phpmpreloaded-1.xx.tar.gz
+
+	b) open a konsole and go to the download directory
+
+	c) make yourself super user
+	> su
+
+	d) move the .tar file to the web directory
+	> mv phpmpreloaded-1.xx.tar.gz /var/www/html/
+	
+	e) unpack the file
+	> tar -xf phpmpreloaded-1.xx.tar.gz
+	
+	f) change the files owner to make them available to apache
+	> chown apache.apache -R phpmpreloaded
+	
+	g) now your web client is online !
+	 open a firefox/konqueror and browse to http://YOURSERVER/phpmpreloaded
+	 
+
+2.) Installation for Ubuntu 
+
+	a) download the file phpmpreloaded-1.xx.tar.gz
+
+	b) open a konsole and go to the download directory
+
+	c) move the .tar file to the web directory
+	> sudo mv phpmpreloaded-1.xx.tar.gz /srv/www/htdocs
+	
+	d) unpack the file
+	> sudo tar -xf phpmpreloaded-1.xx.tar.gz
+	
+	e) change the files owner to make them available to apache
+	> sudo chown www-data.www-data -R phpmpreloaded
+	
+	f) now your web client is online !
+	 open a firefox/konqueror and browse to http://YOURSERVER/phpmpreloaded
+	 
+   
+
+
+-------	
+contact
+------- 
+
+join the mailing list
+	https://lists.sourceforge.net/lists/listinfo/phpmpreloaded-team
+	
+contact us directly
+	http://sourceforge.net/users/tswaehn
+
+	

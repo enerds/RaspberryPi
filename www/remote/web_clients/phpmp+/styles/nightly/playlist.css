@@ -1,0 +1,14 @@
+* { margin: 0; padding: 0; }
+body { font-family: Arial, Helvetica, sans-serif; margin-top: 16px; }
+h1 { font-size: 20px; text-transform: lowercase; letter-spacing: 0.1em; position: absolute; top: -2px; left: 2px; line-height: 20px; }
+a { text-decoration: none; color: blue; }
+a:hover { color: red; text-decoration: underline; }
+#list { list-style-type: none; margin-top: 6px; font-size: 10px; margin-left: 5px; clear: both; }
+#list .remove { display: none; }
+#list li:hover .remove {
+        display: block; position: absolute; background: #eef; padding: 2px; padding-top: none; font-size: 9px; 
+        border: 1px solid #000; border-top: none; right: 2px; text-align: right; color: red; content: "Remove"; }
+#list a { display: block; text-decoration: none; color: #000; }
+#list li.odd { background: #eef; }
+#list li#current { background: #fcc; }
+#list li:hover { background: #ccf; }

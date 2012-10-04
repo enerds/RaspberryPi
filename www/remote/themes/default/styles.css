@@ -1,0 +1,49 @@
+
+body {
+	
+	background-color:#efefef;
+	color:darkgrey;
+	
+}
+
+a {
+	color: #76b6da;
+	text-decoration:none;
+	font-weight:bold;
+	font-family:serif;
+}
+
+
+#client_selector {
+	width:800;
+	border: thin solid silver;
+
+	
+	margin-top:20px;
+	margin-left:auto;
+	margin-right:auto;
+	margin-bottom : 100px;
+	
+	padding:20px;
+	background-color:white;
+	background-image:url(speaker.png);
+	background-repeat:no-repeat;
+	background-position:right top;
+	-moz-border-radius: 20px;	
+}
+
+#description{
+	font-size:small;
+}
+
+#main {
+	//height:300;
+
+}
+
+
+#credit {
+	font-size: xx-small;
+	color : grey;
+	text-align:center;
+}

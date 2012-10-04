@@ -1,0 +1,25 @@
+* { margin: 0; padding: 0; }
+body { font-family: Arial, Helvetica, sans-serif; margin-top: 16px; }
+h1 { font-size: 20px; text-transform: lowercase; letter-spacing: 0.1em; position: absolute; top: -2px; left: 2px; line-height: 20px; }
+a { text-decoration: none; color: blue; }
+a:hover { color: red; text-decoration: underline; }
+
+#stats {
+    border-top: 2px solid #ccf;
+    border-bottom: 2px solid #ccf;
+    padding-left: 5px;
+    background: #eef;
+    margin-bottom: 10px;
+}
+#stats ul {
+    list-style-type: none;
+    margin-left: 10px;
+    font-size: 11px;
+}
+#stats span {
+    font-weight: bold;
+}
+#about p {
+    font-size: 11px;
+    text-align: center;
+}

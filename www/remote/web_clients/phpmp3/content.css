@@ -1,0 +1,36 @@
+div {
+
+    border:1px solid;
+    margin: -1px;
+}
+
+body {
+
+    height: 42em;
+    margin: 0;
+    padding: 0;
+
+}
+
+#playbar {
+
+    float:left;
+    width:30%;
+    height: 20%;
+
+}
+
+
+
+
+#playlist_frame {
+    float:right;
+    width: 30%;
+    height: 80%;
+
+}
+
+.playlist table {
+
+    width: 100%;
+}

@@ -1,0 +1,173 @@
+ver 0.12.1	-- by tswaehn
+	-fix: changed all "split" to "explode" due to deprecated "split"
+	-fix: info2html.php 
+			-	line 32: $index was uninitialized
+	-bug: info2html.php
+		-	line 211: undefined index in $lsinfo due to an entry with index "-1"
+		> info.php "getLsInfo();" returns erroneous value for music when playlists come with
+		  an additional information 
+	-fix: info.php "getLsInfo();"
+	-fix: features.php 
+		-	line 141: use of date() without setting a timezone
+	-fix: features.php 
+		-	line 144: "A non well formed numeric value encountered in ..."
+
+	
+	
+ver 0.12.0 (2006/x/x)
+
+This was near a rewrite, tons of code changed, only the changes that were less significant or that I totally forgot
+are not here. Due to changes in this version the way it loads has completely changed.
+
+My experience is, on a 800 mhz machine phpMp 0.11.x loads at 60% for about 1.8 seconds, phpMp 0.12.0 loads at 100%
+for about 0.8 seconds, this gets shorter (to a limit) with each load due to caching in linux/php. This is with the
+machine with MPD, Apache2 & phpMp serving.
+
+1) Fixed some problems with server change
+2) Changed all prints to echos for uniformity
+3) Got rid of all *_body.php 
+	move playlist_body->playlist
+	move main_body->main
+	move other *_body to features.php as functions
+4) Created server change feature, active server stays at the top
+5) Removed all config scalars and created a config array
+6) Added anchor titles to most things to help out the n00bs
+7) Made playlist frame scalable by centering most text (as config option) and rewriting/adjusting playlist tables.
+8) Created crop function, used for playlist
+9) Changed delete playlist behaviour
+10) Changed update behaviour, now incremental is possible
+11) Added config option overwrite_playlists
+12) Added (better) comments to config.php
+13) Added regex_filename config option to help prevent playlist breakage, and to pretty up the song output
+14) Moved printDirectoryTable to info2html.php
+15) Completely revamped index.php, now everything is accessed through index.php
+16) Removed tons of duplicate php code
+17) Remove all /n (newline)s that were used for HTML, use htmltidy from here on out.
+18) Added phpMp/MPD version to stats
+19) Changed logout behaviour, now a simple logout by just clicking logout
+20) AddAll can now add everything in the MPD database
+21) Removed seperate find() stuff, now integrated into the feature search()
+22) Alternating colors everywhere except stats
+23) Removed one ugly hack for crossfade|random|repeat for a CSS hack
+24) Frame border between playlist & main is now invisible.
+25) Stats is now a table.
+26) Much improved password support, If password is needed now it should be detected, you should be sent to password table automatically if login is needed and when logging in user will be sent directly to main menu.
+27) Configure options are now much better commented, and it is one array now.
+28) Added play_pause config option to alternate between play and pause rather than have two seperate buttons
+29) Make config option to align
+30) Removed $_GET & $_POST from extract() due to known security problems, now there is a setupGet() that takes two variables, the first variable is an array that hasthe keys from $_GET that you want. The second number is the number of keys in the array from the first variable.
+31) Moved connection, connection detection, command execution, includes, login stuff, cookies to the index, so we don't duplicate over frames.
+32) Added option to the config to add the current server to the browser display.
+29) Make config option to align
+30) Don't show the index if sorting by Time because it's not only broken but useless
+31) Moved connection, connection detection, command execution, includes, login stuff, cookies to the index, so we don't duplicate over frames.
+32) Added option to the config to add the current server to the browser display.
+33) Added a icecast/shoutcast browser to the streams feature (thanks goto QballCow for the idea!)
+34) Made cookies per-server so when servers are changed the cookies for one server don't conflict with another servers'
+35) Status is now shown, rather than just printing 'Playing'
+36) Changed use_javascript_add_all to use_javascript
+37) Don't let the MPD command 'kill' be used from MPD
+38) Removed NoFrames support, if it becomes unbroken _then_ put it in.
+39) Remove all underlines
+40) Change kbs to kbps
+41) Cleaned up printPlaylistInfo
+42) Changed pickSort() to a switch type rather than a if..else if
+43) Changed hide_threshold behaviour due to a phpMp core bug, now the number you put in will be times two
+44) Got rid of most globals, most were unneeded due to structural changes
+45) Build command lists then send, that way we max out the block rather than sending partial TCP packets. May see speed difference in playlist due to constant loading.
+46) Change from decodeHTML() sanitizeForPost() sanitizeForURL() to rawurlencode() and rawurldecode() integrated php functions
+47) Added ability for phpMp to automatically download and add m3u and pls playlists
+48) Search now tells how many results were found
+49) Genre/Year support were added
+50) Oddcast/Streamcast Stream browser added
+51) All E_NOTICE warnings were erradicated
+52) Added an 'Outputs' menu for enabling/disabling different outputs in MPD
+53) When MPD is updating it's visible on the main page now, also 	
+54) Prevent updates from colliding
+55) Completely implemented commands/notcommands support across the client, this will make things be much more predictable.
+56) If a sorting by something, if you click it again the sorting is reversed
+57) If filenames_only = "yes" searching now sorts correctly
+58) Only show metadata when it exists in the table
+59) Redo the way time is calculated in the statistics
+60) Turn on autocomplete when saving the playlist
+61) Enable moving on the playlist
+62) Split up the metadata/non-metadata tables, this will fix searching and sorting.
+63) Added new search option 'Any'
+64) When 'find'ing do not assume the sort needs to be changed.
+65) Do not show update option when in the searching or finding feature, due to complications with the submission.
+66) Keep compatibiity with legacy MPD versions.
+67) If not filenames_only and not searching or finding default to 'Any' type of search if using MPD v12.
+68) Add quick search bar option
+69) Add the ability to search for music urls in a webpage (see streams menu)
+	
+ver 0.11.0 (2004/6/18)
+1) Add ability to add streams
+2) Support for displaying stream names
+
+ver 0.10.1 (2004/3/25)
+1) Check that Track, Album, and Artist indexes are set for songs
+2) Fix seek bar devide by zero error when total time is 0
+
+ver 0.10.0 (2004/3/4)
+1) Add password support
+2) Add crossfade support
+3) UTF-8 Support
+4) Fix " " => "%20" for url in last song of playlist (Hannes Reich)
+5) Link directory names instead of using [dir]
+
+ver 0.9.1 (2003/10/30)
+1) Fix flush() bugs with z-compression
+2) Check for each metadata element for songs
+
+ver 0.9.0 (2003/9/30)
+1) Add seeking support
+2) Add random mode support
+3) Add "condense" mode, so that it doesn't show all songs in the playlist for
+faster playlist processing and rendering in a browser.
+
+ver 0.8.3 (2003/8/12)
+1) Fix a bug in display playlist if some songs contain tags and some don't
+2) Fix a bug with +
+3) Fix a bug with #
+
+ver 0.8.2 (2003/7/22)
+1) Added no-cache to html headers
+2) Added nowrap on playlist title buttons
+3) Put unix time in URL to workaround metaflag refresh not works for delete
+4) refresh not working correctly
+
+ver 0.8.1 (2003/7/11)
+1) Fix \ and " bug for adding directories to playlist
+2) Fix bug for indexing music with filenames_only
+3) Rewrite playlist display, so it doesn't put songs in array, just print them
+out immediatly, should consume less ram and be faster
+
+ver 0.8.0 (2003/7/6)
+1) Remove index table, put index with corresponding table
+2) Use listall to queue all files in a directory
+3) Add frames_layout config option
+4) Fix " bug
+
+ver 0.6.0 (2003/6/19)
+1) add volume control
+2) add repeate mode
+3) bug fix in dealing with '
+
+ver 0.5.5 (2003/6/11)
+1) add "prev" and "next"
+2) new "| |" symbol for pause
+3) search by filename
+4) option to use post/js method for add_all, to handle huge numbers of songs, and avoid too long uri errors
+5) $unknown_string option to modify how unknown tag info is displayed
+
+ver 0.5.4 (2003/5/29)
+1) Fix notices/warrnings about uninitizlaed/undefined variables when
+E_NOTICE is set in php.ini (thanks to Aschwin)
+
+0.5.3
+-----
+Added theme.php, and filenames_only option
+
+0.5.0-0.5.2
+-----------
+Initial releases, not sure what changed other than bug fixes.

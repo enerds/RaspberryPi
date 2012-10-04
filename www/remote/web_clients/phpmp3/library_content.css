@@ -1,0 +1,48 @@
+#library {
+
+    float:left;
+    width: 70%;
+    height: 100%;
+
+}
+
+#library_dir {
+        
+    overflow:scroll;
+    height: 95%; 
+}
+
+#library_dir table {
+
+    width: 100%;
+
+}
+
+
+#library .column_add {
+    width: 2em;
+}
+
+
+#library .column_upd {
+    width: 2em;
+}
+
+#library .column_time {
+    width: 3em;
+}
+
+#dir {
+
+
+
+}
+
+
+#crumb {
+
+    height:5%;
+}   
+
+
+

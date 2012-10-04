@@ -99,6 +99,10 @@
 
 	if($_POST["func"]){
 		switch($_POST["func"]){
+			case 'play':
+				exec("/usr/bin/mplayer ".$_POST["folder"]."/*.mp3 &");
+				echo "OK";
+				break;
 			case 'getPinValue':
 				if(isset($_POST["pin"])){
 					echo "Calling function with pin: ".$_POST["pin"];
@@ -111,6 +115,12 @@
 					exec("/usr/bin/pinset 1 1 ".$_POST["pwm"]);
 				}
 				break;
+			case 'setLight':
+				if(isset($_POST["nr"]) && isset($_POST["onoff"])){
+					$cmd = "serial L ".$_POST["nr"]." ".$_POST["onoff"];
+					exec($cmd);
+				}
+				break;
 			case 'getADC':
 				if(isset($_POST["pin"])){
 					//$cmd = 'echo -en "G\r" > /dev/ttyAMA0 ; read -n4 RESPONSE < /dev/ttyAMA0 ; echo $RESPONSE';
@@ -121,6 +131,15 @@
 					echo "Err: No Pin supplied";
 				}
 				break;
+			case 'setNewArtist':
+				$cmd = 'mpc repeat on && mpc clear && mpc add "lastfm://artist/'.$_POST["artist"].'" && mpc play';
+				exec($cmd);
+				break;
+			case 'setNewGenre':
+				$cmd = 'mpc repeat on && mpc clear && mpc add "lastfm://genre/'.$_POST["genre"].'" && mpc play';
+				exec($cmd);
+				break;
+
 			case 'setPinValue':
 				if(!isset($_POST["pin"])){
 					echo "Err: No Pin supplied";

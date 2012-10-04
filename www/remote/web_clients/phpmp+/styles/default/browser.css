@@ -1,0 +1,37 @@
+* { margin: 0; padding: 0; }
+body { font-family: Arial, Helvetica, sans-serif; margin-top: 16px; }
+h1 { font-size: 20px; text-transform: lowercase; letter-spacing: 0.1em; position: absolute; top: -2px; left: 2px; line-height: 20px; }
+a { text-decoration: none; color: blue; }
+a:hover { color: red; text-decoration: underline; }
+#location {
+    border-top: 2px solid #ccf; border-bottom: 2px solid #ccf;
+    background: #eef; padding-left: 5px; font-size: 11px;
+}
+#actions {
+    margin-top: 5px; margin-right: 5px; float: right; margin-bottom: 10px;
+}
+#actions input {
+    border: 1px solid #99f; background: #eef;
+}
+div {
+    clear: both;
+}
+#directories,#playlists,#files,#search_form,#search_results {
+    border: 2px solid #ccf; background: #eef;
+    margin-bottom: 10px; margin-left: 3px; margin-right: 3px;
+}
+h3 {
+    padding-left: 2px; border-bottom: 1px dotted #66f;
+}
+ul { margin-left: 2px; list-style-type: none; }
+a.remove { color: red; float: right; margin-right: 2px; display: block; clear: none; }
+/* Don't work in Gecko-based browsers (yes Mozilla is still buggy and silly :( )
+#search_form input,#search_form select {
+    background: #eef; border: 0px solid #fff; border-right: 1px solid #ccf; height: 16px;
+}
+#search_form input[type="submit"] { width: 9%; border: 0px solid #fff;}
+#search_form input[type="text"] { width: 70%; background: #fff;}
+#search_form select { width: 20%; float: left; }*/
+
+#search_form input[type="text"] { width: 60%; }
+.hidden { display: none; }
