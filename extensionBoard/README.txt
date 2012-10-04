@@ -18,6 +18,22 @@ between the web-interface and database and the atmega.
 It will periodically check ifthenelse-triggers, read ADC
 values to the database, and update pin definitions from the database.
 
+=== Serial Commands Currently Implemented
+== PXYZ - Set pin as in-/output
+	X: B|C|D
+	Y: 0-8
+	Z: 1|0 (1=output,0=input)
+
+== SXYZ - Set Pin H/L
+	X: B|C|D
+	Y: 0-8
+	Z: 1|0 (1=H,0=L)
+
+== GXY - Get ADC or digital Value of Pin
+	X: B|C|D
+	Y: 0-8
+
 === TODO
+- Implement digital reading of pins in 'G'-Function
 - Implement PWM functionality
 - Extend HostSoftware
