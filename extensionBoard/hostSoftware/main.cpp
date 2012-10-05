@@ -94,7 +94,7 @@ int main(int argc, char* argv[]){
 
 				// output the values
 				for(std::map<std::string,int>::const_iterator i = adcValues.begin(); i != adcValues.end(); ++i){
-	            			//std::cout << i->first << ": " << i->second << std::endl;
+	            			std::cout << i->first << ": " << i->second << std::endl;
 
 					// put the values in the database
 					myDB.insertValue(i->first, i->second);

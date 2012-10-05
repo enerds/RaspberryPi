@@ -39,9 +39,9 @@ Mysql::~Mysql(){
 void Mysql::connectDB(){
 	mysql = mysql_init(NULL);
 	if(!mysql_real_connect(mysql, myHost, myUser, myPwd, myDB, 0, NULL, 0) != 0){
-		std::clog << "[Mysql] Kann nicht verbinden!" << std::endl;
+		if(verbose > 2) std::clog << "[Mysql] Kann nicht verbinden!" << std::endl;
 	}else{
-		std::clog << "[Mysql] Datenbank verbunden." << std::endl;
+		if(verbose > 2) std::clog << "[Mysql] Datenbank verbunden." << std::endl;
 	}
 }
 
@@ -96,10 +96,10 @@ std::vector< std::pair<std::string, long int> > Mysql::getADCs(){
 	int numrows = mysql_num_rows(res);
 
 	if(mysql_num_rows(res) == 0){
-		std::clog << "[Mysql] No pins configured as ADC." << std::endl;
+		if(verbose > 2) std::clog << "[Mysql] No pins configured as ADC." << std::endl;
 	}else{
 		while(row=mysql_fetch_row(res)){
-			std::clog << "[Mysql] Pin configured as ADC: " << row[0] << std::endl;
+			if(verbose > 2) std::clog << "[Mysql] Pin configured as ADC: " << row[0] << std::endl;
 			std::pair<std::string, long int> tmp;
 			tmp.first = row[0];
 			tmp.second = atol(row[1]);

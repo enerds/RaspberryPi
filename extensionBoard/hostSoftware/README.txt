@@ -19,4 +19,12 @@ If I check some ADCs every second the database could get very big very fast.
 How do I determine how often I clean up the database ?
 And how do I do this? With a timestamp in the database for each value ?
 
+-> implemented intervall stuff for different ADC
 
+TODO:
+
+=== ADCs, Interval and database
+- Implemented interval setting in web-frontend
+- Show ADC values in web frontend
+
+=== Implement if-then-else constructs
