@@ -27,6 +27,12 @@ void ts2str(long ts){
 int vec2int(std::vector<char> inp){
 	int ret = 0;
 
+	/*
+	for(int x=inp.size()-1; x>=0; x--){
+		std::cout << "Index " << x << " is: " << inp.at(x) << std::endl;
+	}
+	*/
+
 	// read the last digit first
 	int count = 1;
 	for(int x=inp.size()-3 ; x >= 0; x--){
@@ -71,6 +77,8 @@ int main(int argc, char* argv[]){
 			time_t     now;
 			time(&now);
 
+			response.clear();
+
 			// if we waited long enough, take the reading and insert into database
 			if(now - lastRead >= interval){ 
 				while(response.size() == 0){
@@ -86,7 +94,7 @@ int main(int argc, char* argv[]){
 
 				// output the values
 				for(std::map<std::string,int>::const_iterator i = adcValues.begin(); i != adcValues.end(); ++i){
-	            			std::cout << i->first << ": " << i->second << std::endl;
+	            			//std::cout << i->first << ": " << i->second << std::endl;
 
 					// put the values in the database
 					myDB.insertValue(i->first, i->second);

@@ -357,6 +357,8 @@ int main (void) {
 			if(stringbuffer[2] == '5'){
 				ADMUX |= (1<<MUX0) | (1<<MUX2);
 			}
+	
+			_delay_ms(10);
 
 			// START ADC
 			ADCSRA |= (1<<ADSC);
@@ -367,7 +369,7 @@ int main (void) {
 			itoa(sampleValue,stringbuffer,10);
 			strcat(stringbuffer, "\n\r");
 
-			_delay_ms(100);
+			_delay_ms(10);
 			put_string(stringbuffer);
 
 			stringbuffer[0] = 'N';
