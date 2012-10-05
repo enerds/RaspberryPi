@@ -11,12 +11,25 @@
 
 using namespace std;
 
+void ts2str(long ts){
+	time_t     now;
+	struct tm  tsa;
+  	char       buf[80];
+	now = ts;
+    	// Get current time
+    	time(&now);
+    	// Format time, "ddd yyyy-mm-dd hh:mm:ss zzz"
+    	tsa = *localtime(&now);
+    	strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &tsa);
+    	printf("which equals: %s\n", buf);
+}
+
 int vec2int(std::vector<char> inp){
 	int ret = 0;
 
 	// read the last digit first
 	int count = 1;
-	for(int x=0 ; x<inp.size()-2 ; x++){
+	for(int x=inp.size()-3 ; x >= 0; x--){
 		ret += ((int)inp.at(x)-48) * count;
 		count *= 10;
 	}
@@ -31,34 +44,56 @@ int main(int argc, char* argv[]){
 	std::vector<char> request;
 	std::vector<char> response;
 
-	std::vector<std::string> adcPins;
+	std::vector< std::pair<std::string, long int> > adcPins;
 
 	std::map<std::string, int> adcValues;
 
 	while(1){
 		/************************************************* 
 		 **  check ADC values of pins configured as ADC **
+		 ** 						**
+		 ** TODO					**
+		 ** - check interval user desires		**
+		 ** - get current time and compare		**
 		 *************************************************/
 		// get the pins configured as ADC from the database
 		adcPins = myDB.getADCs();
 
 		// cycle through them and get their values via serial
 		for(int x=0; x < adcPins.size();x++){
-			std::string curPin = adcPins.at(x); // e.g. "PC0"
-			while(response.size() == 0){
-				request.clear(); // request of form GXY, e.g. GC0
-				request.push_back('G');
-				request.push_back(curPin[1]);
-				request.push_back(curPin[2]);
-				response = mySerial.sendReceive(request);
-			}
-			// convert the char-vector to an int
-			adcValues[curPin] = vec2int(response);
+			std::string curPin = adcPins.at(x).first; // e.g. "PC0"
+			long int interval = adcPins.at(x).second;
 
-			// output the values
-			for(std::map<std::string,int>::const_iterator i = adcValues.begin(); i != adcValues.end(); ++i)
-            			std::cout << i->first << ": " << i->second << std::endl;
+			// get last reading time of this pin
+			long int lastRead = myDB.getLastReading(curPin);
+
+			// get current system timestamp	
+			time_t     now;
+			time(&now);
+
+			// if we waited long enough, take the reading and insert into database
+			if(now - lastRead >= interval){ 
+				while(response.size() == 0){
+					request.clear(); // request of form GXY, e.g. GC0
+					request.push_back('G');
+					request.push_back(curPin[1]);
+					request.push_back(curPin[2]);
+					response = mySerial.sendReceive(request);
+				}
+
+				// convert the char-vector to an int
+				adcValues[curPin] = vec2int(response);
+
+				// output the values
+				for(std::map<std::string,int>::const_iterator i = adcValues.begin(); i != adcValues.end(); ++i){
+	            			std::cout << i->first << ": " << i->second << std::endl;
+
+					// put the values in the database
+					myDB.insertValue(i->first, i->second);
+				}
+			}
 		}
+		sleep(1);
 	}
 	
 

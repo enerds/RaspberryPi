@@ -10,14 +10,16 @@
 #include <vector>
 #include <mysql.h>
 #include <ctime>
+#include <utility>
 
 class Mysql{
 	public:
 		Mysql(const char * host, const char * user, const char * pwd, const char * db);
 		~Mysql();
-		int checkCode(std::vector<int> code, int door);		
-		void cleanupTemp();
-		std::vector<std::string> getADCs(); 
+
+		std::vector< std::pair<std::string, long int> > getADCs(); 
+		void insertValue(std::string pin, int value);
+		long int getLastReading(std::string curPin);
 	private:
 		int verbose;
 		void connectDB();

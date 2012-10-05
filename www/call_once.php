@@ -21,7 +21,14 @@
 		`activefunc` varchar(255),
 		`availablefunc` varchar(255),
 		`desc` varchar(255),
+		`interval` int(255) NOT NULL DEFAULT '60',
 		PRIMARY KEY (`pin`)
+	)");
+
+	mysql_query("CREATE TALE IF NOT EXISTS sensors(
+		`ts` TIMESTAMP DEFAULT NOW(),
+		`pin` varchar(4),
+		`value` int(8)
 	)");
 
 	// check if there is already data in there,
