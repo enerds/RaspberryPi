@@ -8,9 +8,21 @@
 		<link rel="stylesheet" type="text/css" href="style/style.css" />
 
 		<!-- SCRIPT INCLUDES -->
+		<!--
 		<script type="text/javascript" src="js/jquery-1.3.2.min.js"></script>
 		<script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+		-->
+		<script type="text/javascript" src="js/jqplot/jquery.min.js"></script>
 		<script type="text/javascript" src="js/smoothie.js"></script>
+
+		<script type="text/javascript" src="js/jqplot/jquery.jqplot.js"></script>
+		<script type="text/javascript" src="js/jqplot/jquery.jqplot.css"></script>
+
+		<script type="text/javascript" src="js/jqplot/plugins/jqplot.barRenderer.min.js"></script>
+		<script type="text/javascript" src="js/jqplot//plugins/jqplot.dateAxisRenderer.min.js"></script>
+		<script type="text/javascript" src="js/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
+		<script type="text/javascript" src="js/jqplot/plugins/jqplot.canvasAxisTickRenderer.min.js"></script>
+		<script type="text/javascript" src="js/jqplot/plugins/jqplot.categoryAxisRenderer.min.js"></script>
 
 <?php
 	include 'call_once.php';
@@ -23,17 +35,6 @@
 
 		<!-- OWN SCRIPTS -->
 		<script type="text/javascript">
-			$(function(){
-				$("#slider").slider({
-					value: 0,
-					min: 0,
-					max: 1023,
-					change: function(event, ui){
-						setPWM(ui.value);
-					}
-				});
-			});
-
 			function setNewArtist(){
 				$.post("functions.php",{
 					func: 'setNewArtist',
@@ -188,8 +189,32 @@
 			}
 
 
-		</script>
 
+$(document).ready(function(){
+  var line1 = [['Cup Holder Pinion Bob', 7], ['Generic Fog Lamp', 9], ['HDTV Receiver', 15], 
+  ['8 Track Control Module', 12], [' Sludge Pump Fourier Modulator', 3], 
+  ['Transcender/Spice Rack', 6], ['Hair Spray Danger Indicator', 18]];
+ 
+  var plot2 = $.jqplot('chart2', [line1], {
+    title: 'Concern vs. Occurrance',
+    //series:[{renderer:$.jqplot.BarRenderer}],
+    axesDefaults: {
+/*        tickRenderer: $.jqplot.CanvasAxisTickRenderer ,
+        tickOptions: {
+          angle: 0,
+          fontSize: '10pt'
+        }
+*/
+    },
+    axes: {
+      xaxis: {
+        renderer: $.jqplot.CategoryAxisRenderer
+      }
+    }
+  });
+});
+
+		</script>
 	</head>
 
 	<body>
@@ -268,7 +293,7 @@ if($_POST["pin_func"]){
 		}
 		echo '<select name="func">';
 		foreach($available_funcs as $func){
-			echo '<option value="">'.$func.'</option>';
+			echo '<option value="'.$func.'">'.$func.'</option>';
 		}
 		echo '</select>';
 		echo ' ';
@@ -371,10 +396,10 @@ if($_POST["pin_func"]){
 			<!-- GRAPHS -->
 			<div class="set">
 				<h2>Temperatures</h2>
-<?php
-	exec("gnuplot ./gnuplot");
-?>
-				<img src="temp.png" />
+<div id="chart2" style="height:300px; width:500px;"></div>
+<div class="code prettyprint">
+<pre class="code prettyprint brush: js"></pre>
+</div>
 			</div><!-- set -->
 
 			<div class="set">
