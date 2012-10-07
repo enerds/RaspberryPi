@@ -35,6 +35,18 @@
 
 		<!-- OWN SCRIPTS -->
 		<script type="text/javascript">
+  var line1 = [['Cup Holder Pinion Bob', 7], ['Generic Fog Lamp', 9], ['HDTV Receiver', 15], 
+  ['8 Track Control Module', 12], [' Sludge Pump Fourier Modulator', 3], 
+  ['Transcender/Spice Rack', 6], ['Hair Spray Danger Indicator', 18]];
+
+  var plot2;
+  var plot2_drawn = 0;
+
+$(document).ready(function(){
+	getADCvalues('PC0', 50);
+});
+
+
 			function setNewArtist(){
 				$.post("functions.php",{
 					func: 'setNewArtist',
@@ -127,6 +139,47 @@
 				});
 			}
 
+			function getADCvalues(myadc, mylimit){
+				$.post("sql_adapter.php", {
+					adc : myadc,
+					limit : mylimit
+				},function (data){
+					JSONobject = JSON.parse(data);
+					list1 = new Array();
+					for(i=0; i < JSONobject.length; i++){
+						data = new Array();
+						data[0] = JSONobject[i].date;
+						data[1] = JSONobject[i].value;
+						list1[i] = data;
+					};
+					if(plot2_drawn == 1){
+						plot2.destroy();
+					}
+					plot2_drawn = 1;
+					plot2 = $.jqplot('chart2', [list1], {
+					    title: myadc,
+					    axesDefaults: {},
+					    axes: {
+					      xaxis: {
+					        renderer: $.jqplot.CategoryAxisRenderer,
+					        tickRenderer: $.jqplot.CanvasAxisTickRenderer ,
+						numberTicks:11,
+					        tickOptions: {
+					          angle: -30,
+					          fontSize: '10pt',
+						  textColor: '#000000'
+					        }
+					      },
+						yaxis:{
+							min:0,
+							max:1030
+						}
+					    }
+					  });
+				});
+			}
+
+
 			function setAlarm(){
 				// get input values of fields
 				myhour = $("#alarm-hour").val();
@@ -190,29 +243,6 @@
 
 
 
-$(document).ready(function(){
-  var line1 = [['Cup Holder Pinion Bob', 7], ['Generic Fog Lamp', 9], ['HDTV Receiver', 15], 
-  ['8 Track Control Module', 12], [' Sludge Pump Fourier Modulator', 3], 
-  ['Transcender/Spice Rack', 6], ['Hair Spray Danger Indicator', 18]];
- 
-  var plot2 = $.jqplot('chart2', [line1], {
-    title: 'Concern vs. Occurrance',
-    //series:[{renderer:$.jqplot.BarRenderer}],
-    axesDefaults: {
-/*        tickRenderer: $.jqplot.CanvasAxisTickRenderer ,
-        tickOptions: {
-          angle: 0,
-          fontSize: '10pt'
-        }
-*/
-    },
-    axes: {
-      xaxis: {
-        renderer: $.jqplot.CategoryAxisRenderer
-      }
-    }
-  });
-});
 
 		</script>
 	</head>
@@ -391,12 +421,13 @@ if($_POST["pin_func"]){
 			<div class="set">
 				<h2>Graphs</h2>
 				<canvas id="mycanvas" width="400" height="100"></canvas>
+				<a href="#" onClick="getADCvalues('PC0', 50)">Replot</a>
 			</div><!-- set -->
 
 			<!-- GRAPHS -->
 			<div class="set">
 				<h2>Temperatures</h2>
-<div id="chart2" style="height:300px; width:500px;"></div>
+<div id="chart2" style="height:300px; width:100%;"></div>
 <div class="code prettyprint">
 <pre class="code prettyprint brush: js"></pre>
 </div>
