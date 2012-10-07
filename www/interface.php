@@ -43,7 +43,7 @@
   var plot2_drawn = 0;
 
 $(document).ready(function(){
-	getADCvalues('PC0', 50);
+	getADCvalues('PC0', 10);
 });
 
 
@@ -146,11 +146,13 @@ $(document).ready(function(){
 				},function (data){
 					JSONobject = JSON.parse(data);
 					list1 = new Array();
-					for(i=0; i < JSONobject.length; i++){
+					count=0;
+					for(i=JSONobject.length-1; i >= 0 ; i--){
 						data = new Array();
 						data[0] = JSONobject[i].date;
 						data[1] = JSONobject[i].value;
-						list1[i] = data;
+						list1[count] = data;
+						count++;
 					};
 					if(plot2_drawn == 1){
 						plot2.destroy();
@@ -172,7 +174,7 @@ $(document).ready(function(){
 					      },
 						yaxis:{
 							min:0,
-							max:1030
+							max:1024
 						}
 					    }
 					  });

@@ -10,7 +10,7 @@ if($_POST["adc"]){
 	$dbh = mysql_connect($host, $usr, $pwd) or die("Could not connect");
 	$sel = mysql_select_db($db, $dbh) or die("Could not select database");
 
-	$result = mysql_query("SELECT * FROM sensors WHERE `pin`='".$_POST["adc"]."' LIMIT ".$thisLimit." ");
+	$result = mysql_query("SELECT * FROM sensors WHERE `pin`='".$_POST["adc"]."' ORDER BY `ts` DESC LIMIT ".$thisLimit." ");
 
 	$a = array();
 
