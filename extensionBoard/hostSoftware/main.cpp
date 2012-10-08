@@ -92,13 +92,11 @@ int main(int argc, char* argv[]){
 				// convert the char-vector to an int
 				adcValues[curPin] = vec2int(response);
 
-				// output the values
-				for(std::map<std::string,int>::const_iterator i = adcValues.begin(); i != adcValues.end(); ++i){
-	            			std::cout << i->first << ": " << i->second << std::endl;
 
-					// put the values in the database
-					myDB.insertValue(i->first, i->second);
-				}
+				myDB.insertValue(curPin, adcValues[curPin]);
+
+				// output the values
+				//std::cout << curPin << ":" << adcValues[curPin] << std::endl;
 			}
 		}
 		sleep(1);
