@@ -32,6 +32,13 @@
 	$sel = mysql_select_db($db, $dbh) or die("Could not select database");
 
 ?>
+<?php
+/* insert new pin definition in database */
+if($_POST["update_pin"]){
+	mysql_query("UPDATE atmega SET `dir`='".$_POST['dir']."', `activefunc`='".$_POST['func']."',`desc`='".$_POST['desc']."'  WHERE pin='".$_POST['pin']."' ");
+	echo 'UPDATED PIN DEFINITION<br /><br />';
+}
+?>
 
 		<!-- OWN SCRIPTS -->
 		<script type="text/javascript">
@@ -53,7 +60,9 @@ $(document).ready(function(){
 <?php
 	foreach($adc_pins as $pin){
 		echo 'getADCvalues(\''.$pin.'\', 10, \''.$pin.'\');';
+		echo 'window.setInterval("getADCvalues(\''.$pin.'\',10,\''.$pin.'\')", 10000);';
 	}
+
 ?>
 });
 
@@ -321,12 +330,6 @@ $(document).ready(function(){
 				<br style="clear:both;" />
 
 <?php
-/* insert new pin definition in database */
-if($_POST["update_pin"]){
-	mysql_query("UPDATE atmega SET `dir`='".$_POST['dir']."', `activefunc`='".$_POST['func']."',`desc`='".$_POST['desc']."'  WHERE pin='".$_POST['pin']."' ");
-	echo 'UPDATED PIN DEFINITION<br /><br />';
-}
-
 if($_POST["pin_func"]){
 	echo '<form action="" method="post">';
 	if($_POST["pin"]){
