@@ -48,25 +48,20 @@ void Mysql::connectDB(){
 
 void Mysql::closeDB(){
 	mysql_close(mysql);
+	mysql_library_end();
 }
 
 
 void Mysql::insertValue(std::string pin, int value){
-	connectDB();
-
 	std::stringstream sstm;
 	sstm << value;
 	std::string query = "INSERT INTO sensors (pin,value) VALUES ('" + pin + "' , " + sstm.str() + ")";
 	mysql_query(mysql, query.c_str());
 	if(mysql_errno(mysql) != 0) std::clog << "[Mysql] insertValue Error " << mysql_errno(mysql) << mysql_error(mysql) << std::endl;
-
-	closeDB();
 }
 
 
 long int Mysql::getLastReading(std::string curPin){
-	connectDB();
-
 	long int ret = 0;
 	std::string query = "SELECT UNIX_TIMESTAMP(`ts`) FROM sensors WHERE `pin`='" + curPin +"' ORDER BY `ts` DESC LIMIT 1";
 	mysql_query(mysql, query.c_str());
@@ -78,15 +73,13 @@ long int Mysql::getLastReading(std::string curPin){
 		ret = atol(row[0]);
 	}
 
-	closeDB();
+	mysql_free_result( res );
 
 	return ret;
 }
 
 std::vector< std::pair<std::string, long int> > Mysql::getADCs(){
 	std::vector< std::pair<std::string, long int> > adcPins;
-
-	connectDB();
 
 	std::string query = "SELECT `pin`,`interval` FROM atmega WHERE activefunc = 'adc'";
 	if(verbose > 2) std::clog << "[Mysql] Getting ADC pins" << std::endl;
@@ -107,7 +100,7 @@ std::vector< std::pair<std::string, long int> > Mysql::getADCs(){
 		}
 	}
 
-	closeDB();
+	mysql_free_result( res );
 
 	return adcPins;
 }

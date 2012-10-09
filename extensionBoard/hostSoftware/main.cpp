@@ -46,6 +46,7 @@ int vec2int(std::vector<char> inp){
 int main(int argc, char* argv[]){
 	Serial mySerial("/dev/ttyAMA0");
 	Mysql myDB("localhost", "pi","Twe28+-","rpi");	
+	myDB.connectDB();
 
 	std::vector<char> request;
 	std::vector<char> response;
@@ -53,6 +54,11 @@ int main(int argc, char* argv[]){
 	std::vector< std::pair<std::string, long int> > adcPins;
 
 	std::map<std::string, int> adcValues;
+
+	std::string curPin;
+	long int interval, lastRead;
+	time_t     now;
+	int x;
 
 	while(1){
 		/************************************************* 
@@ -66,15 +72,14 @@ int main(int argc, char* argv[]){
 		adcPins = myDB.getADCs();
 
 		// cycle through them and get their values via serial
-		for(int x=0; x < adcPins.size();x++){
-			std::string curPin = adcPins.at(x).first; // e.g. "PC0"
-			long int interval = adcPins.at(x).second;
+		for(x=0; x < adcPins.size();x++){
+			curPin = adcPins.at(x).first; // e.g. "PC0"
+			interval = adcPins.at(x).second;
 
 			// get last reading time of this pin
-			long int lastRead = myDB.getLastReading(curPin);
+			lastRead = myDB.getLastReading(curPin);
 
 			// get current system timestamp	
-			time_t     now;
 			time(&now);
 
 			response.clear();
@@ -96,10 +101,11 @@ int main(int argc, char* argv[]){
 				myDB.insertValue(curPin, adcValues[curPin]);
 
 				// output the values
-				//std::cout << curPin << ":" << adcValues[curPin] << std::endl;
+				// std::cout << std::endl << curPin << ":" << adcValues[curPin] << std::endl;
 			}
 		}
-		sleep(1);
+		usleep(50000);
+		//sleep(1);
 	}
 	
 

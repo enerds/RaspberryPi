@@ -20,9 +20,9 @@ class Mysql{
 		std::vector< std::pair<std::string, long int> > getADCs(); 
 		void insertValue(std::string pin, int value);
 		long int getLastReading(std::string curPin);
+		void connectDB();
 	private:
 		int verbose;
-		void connectDB();
 		void closeDB();
 		MYSQL *mysql;
 		MYSQL_RES *res;
