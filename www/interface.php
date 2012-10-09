@@ -23,6 +23,8 @@
 		<script type="text/javascript" src="js/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
 		<script type="text/javascript" src="js/jqplot/plugins/jqplot.canvasAxisTickRenderer.min.js"></script>
 		<script type="text/javascript" src="js/jqplot/plugins/jqplot.categoryAxisRenderer.min.js"></script>
+		<script type="text/javascript" src="js/jqplot/plugins/jqplot.highlighter.js"></script>
+		<script type="text/javascript" src="js/jqplot/plugins/jqplot.pointLabels.js"></script>
 
 <?php
 	include 'call_once.php';
@@ -52,6 +54,7 @@ if($_POST["update_pin"]){
 		$adc_pins[] = $res['pin'];
   		echo 'var plot'.$res['pin'].';';
 		echo 'var plot'.$res['pin'].'_drawn = 0;';
+		echo 'var '.$res['pin'].' = "'.$res['desc'].'" ;';
 	}
 ?>
 
@@ -60,7 +63,7 @@ $(document).ready(function(){
 <?php
 	foreach($adc_pins as $pin){
 		echo 'getADCvalues(\''.$pin.'\', 10, \''.$pin.'\');';
-		echo 'window.setInterval("getADCvalues(\''.$pin.'\',10,\''.$pin.'\')", 10000);';
+		echo 'window.setInterval("getADCvalues(\''.$pin.'\',200,\''.$pin.'\')", 10000);';
 	}
 
 ?>
@@ -171,6 +174,12 @@ $(document).ready(function(){
 						data = new Array();
 						data[0] = JSONobject[i].date;
 						data[1] = JSONobject[i].value;
+						if(count % 50 == 0){
+							data[2] = JSONobject[i].date;
+						}else{
+							data[2] = null;
+						}
+
 						list1[count] = data;
 						count++;
 					};
@@ -182,8 +191,13 @@ $(document).ready(function(){
 					plot'.$pin.'.destroy();
 				} 
 				plot'.$pin.'_drawn = 1;
+				$.jqplot.config.enablePlugins = true;
 				plot'.$pin.' = $.jqplot(mychart, [list1], {
-					    	title: myadc,
+					    	title: myadc + ": " + '.$pin.',
+						highlighter: {useAxesFormatters: true, tooltipAxes: \'xy\', show: true},
+						seriesDefaults: {
+							showMarker:false
+						},
 					    	axesDefaults: {},
 					    	axes: {
 					      		xaxis: {
