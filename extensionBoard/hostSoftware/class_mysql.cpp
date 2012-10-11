@@ -14,18 +14,10 @@
 #include "class_log.h"
 
 Mysql::Mysql(const char * host, const char * user, const char * pwd, const char * db){
-	/*
-	 * verbose level:
-	 * 1 - high level
-	 * 2 - hex-daten
-	 */
-	verbose = 0;
-
 	myHost = host;
 	myUser = user;
 	myPwd = pwd;
 	myDB = db;
-	
 
 	std::clog.rdbuf(new Log("rpid", LOG_LOCAL5));
 	

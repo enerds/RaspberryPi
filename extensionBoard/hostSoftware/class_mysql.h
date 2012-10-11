@@ -22,7 +22,12 @@ class Mysql{
 		long int getLastReading(std::string curPin);
 		void connectDB();
 	private:
-		int verbose;
+		/*
+		 * verbose level:
+		 * 1 - high level
+		 * 2 - hex-daten
+		 */
+		static const int verbose = 0;
 		void closeDB();
 		MYSQL *mysql;
 		MYSQL_RES *res;

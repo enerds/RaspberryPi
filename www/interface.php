@@ -54,6 +54,7 @@ if($_POST["update_pin"]){
 		$adc_pins[] = $res['pin'];
   		echo 'var plot'.$res['pin'].';';
 		echo 'var plot'.$res['pin'].'_drawn = 0;';
+		echo 'var '.$res['pin'].'limit = 20;';
 		echo 'var '.$res['pin'].' = "'.$res['desc'].'" ;';
 	}
 ?>
@@ -62,8 +63,8 @@ if($_POST["update_pin"]){
 $(document).ready(function(){
 <?php
 	foreach($adc_pins as $pin){
-		echo 'getADCvalues(\''.$pin.'\', 10, \''.$pin.'\');';
-		echo 'window.setInterval("getADCvalues(\''.$pin.'\',200,\''.$pin.'\')", 10000);';
+		echo 'getADCvalues(\''.$pin.'\', '.$pin.'limit, \''.$pin.'\');';
+		echo 'window.setInterval("getADCvalues(\''.$pin.'\','.$pin.'limit,\''.$pin.'\')", 10000);';
 	}
 
 ?>
@@ -170,23 +171,20 @@ $(document).ready(function(){
 					JSONobject = JSON.parse(data);
 					list1 = new Array();
 					count=0;
-					for(i=JSONobject.length-1; i >= 0 ; i--){
-						data = new Array();
-						data[0] = JSONobject[i].date;
-						data[1] = JSONobject[i].value;
-						if(count % 50 == 0){
-							data[2] = JSONobject[i].date;
+					for(i=JSONobject.length-1; i >= 0 ; i-=1){
+						if(count % (mylimit/10) == 0){
+							list1[count] = new Array(JSONobject[i].date, JSONobject[i].value, JSONobject[i].date);
 						}else{
-							data[2] = null;
+							list1[count] = new Array(JSONobject[i].date, JSONobject[i].value);
 						}
 
-						list1[count] = data;
 						count++;
 					};
 <?php
 	foreach($adc_pins as $pin){
 		echo '
 			if(myadc == "'.$pin.'"){ 
+				'.$pin.'limit = mylimit;
 				if(plot'.$pin.'_drawn == 1){ 
 					plot'.$pin.'.destroy();
 				} 
@@ -203,7 +201,7 @@ $(document).ready(function(){
 					      		xaxis: {
 					        		renderer: $.jqplot.CategoryAxisRenderer,
 					       			tickRenderer: $.jqplot.CanvasAxisTickRenderer ,
-								numberTicks:11,
+								numberTicks:mylimit/4,
 					        		tickOptions: {
 					          		angle: -30,
 					          		fontSize: \'10pt\',
@@ -357,6 +355,7 @@ if($_POST["pin_func"]){
 			$available_funcs = explode("|", $res['availablefunc']);
 			$desc = $res['desc'];
 			$dir = $res['dir'];
+			$interval = $res['interval'];
 		}
 		echo '<select name="func">';
 		foreach($available_funcs as $func){
@@ -377,6 +376,7 @@ if($_POST["pin_func"]){
 		}
 		echo '<select>';
 		echo '<input type="text" name="desc" value="'.$desc.'"/>';
+		echo '<input type="text" name="interval" value="'.$interval.'" /> Seconds';
 		echo '<input type="submit" value="save" />';
 
 	}else{
@@ -390,9 +390,14 @@ if($_POST["pin_func"]){
 				echo '<form action="" method="post"><input type="hidden" name="pin_func" id="pin_func" value="1" />';
 				while($res = mysql_fetch_array( $result )){ 
 					if($res['nr'] < 15){
-						echo '<div style="float:left;width:250px;color:#444;">'.$res['desc'].' </div>';
+						echo '<div style="float:left;width:230px;color:#444;">'.$res['desc'].' </div>';
 						echo $res['pin'] ;
-						if($res['activefunc'] != "pwr") echo ' '.$res['activefunc'].'  ';
+						if($res['activefunc'] != "pwr"){
+							if($res['activefunc'] == "adc"){
+								echo ' '.$res['interval'].' ';
+							}
+							 echo ' '.$res['activefunc'].'  ';
+						}
 						if($res['dir'] == "in") echo '<span style="float:right;margin-left:10px;margin-right:5px;">&rarr;</span>';
 						if($res['dir'] == "out") echo '<span style="float:right;margin-left:10px;margin-right:5px;">&larr;</span>';
 						if($res['activefunc'] == "pwr"){
@@ -405,7 +410,7 @@ if($_POST["pin_func"]){
 				}
 				echo '</div>';
 
-				echo '<div style="border:2px solid black;border-right:none;width:80px;float:left;">';
+				echo '<div style="border:2px solid black;border-right:none;width:60px;float:left;">';
 				$result = mysql_query("SELECT * FROM atmega ORDER BY `nr` ");
 				while($res = mysql_fetch_array( $result )){ 
 					if($res['nr'] < 15) 
@@ -416,7 +421,7 @@ if($_POST["pin_func"]){
 						}
 				}
 				echo '</div>';
-				echo '<div style="border:2px solid black;border-left:none;width:80px;float:left;">';
+				echo '<div style="border:2px solid black;border-left:none;width:60px;float:left;">';
 				$result = mysql_query("SELECT * FROM atmega ORDER BY `nr` DESC");
 				while($res = mysql_fetch_array( $result )){ 
 					if($res['nr'] >= 15) 
@@ -436,14 +441,20 @@ if($_POST["pin_func"]){
 						if($res['dir'] == "in") echo '<span style="float:left;margin-right:10px;margin-left:5px;">&larr;</span>';
 						if($res['dir'] == "out") echo '<span style="float:left;margin-right:10px;margin-left:5px;">&rarr;</span>';
 						if($res['activefunc'] == "pwr"){
+
 							echo '<span style="float:left;margin-right:10px;margin-left:5px;">&#9889;</span>';
 						}else{
 							if($res['dir'] == "n/a") echo '<span style="float:left;margin-right:10px;margin-left:5px;">&#9744;</span>';
 						}
 
 						echo '  '.$res['pin'] ;
-						if($res['activefunc'] != "pwr") echo ' '.$res['activefunc'].' ';
-						echo '<div style="float:right;width:250px;color:#444;text-align:right;"> '.$res['desc'].'</div>';
+						if($res['activefunc'] != "pwr"){
+							echo ' '.$res['activefunc'].' ';
+ 							if($res['activefunc'] == "adc"){
+								echo ' '.$res['interval'].'s ';
+							}
+						}
+						echo '<div style="float:right;width:230px;color:#444;text-align:right;"> '.$res['desc'].'</div>';
 						echo '<br style="clear:both;height:0px;padding:0;margin:0"/>';
 					}
 				}
@@ -465,7 +476,10 @@ if($_POST["pin_func"]){
 				<h2>Temperatures</h2>
 <?php
 	foreach($adc_pins as $pin){
-		echo '<a href="#" onClick="getADCvalues(\''.$pin.'\', 50, \''.$pin.'\')">Replot '.$pin.'</a>';
+		echo '<a href="javascript:void(0)" onClick="getADCvalues(\''.$pin.'\', 120, \''.$pin.'\')">120 '.$pin.'</a> ';
+		echo '<a href="javascript:void(0)" onClick="getADCvalues(\''.$pin.'\', 720, \''.$pin.'\')">720 '.$pin.'</a> ';
+		echo ' <a href="javascript:void(0)" onClick="getADCvalues(\''.$pin.'\', 1440, \''.$pin.'\')">1440 '.$pin.'</a> ';
+		echo ' <a href="javascript:void(0)" onClick="getADCvalues(\''.$pin.'\', 2880, \''.$pin.'\')">2880 '.$pin.'</a> ';
 		echo '<div id="'.$pin.'" style="height:300px; width:100%;"></div>';
 		echo '<div class="code prettyprint">';
 		echo '<pre class="code prettyprint brush: js"></pre>';
