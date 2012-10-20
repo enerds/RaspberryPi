@@ -1,0 +1,45 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>scroller</title>
+<link href="css/webwidget_rating_simple.css" rel="stylesheet" type="text/css"></link>
+<script type="text/javascript" src="js/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="js/webwidget_rating_simple.js"></script>
+</head>
+    <body>
+        <script language="javascript" type="text/javascript">
+            function test(value){
+                alert("This rating's value is "+value);
+            }
+            $(function() {
+                $("#my_text_input").webwidget_rating_simple({
+                    rating_star_length: '5',
+                    rating_initial_value: '3',
+                    rating_function_name: 'test',//this is function name for click
+                    directory: 'images'
+                });
+            });
+        </script>
+        
+        <table border="0">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="my_text_input"></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><input type="text" name="my_text_input" value="" id="my_text_input" /></td>
+                </tr>
+            </tbody>
+        </table>
+
+    </body>
+</html>

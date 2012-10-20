@@ -8,27 +8,107 @@
 		<link rel="stylesheet" type="text/css" href="style/style.css" />
 
 		<!-- SCRIPT INCLUDES -->
+		<!--
 		<script type="text/javascript" src="js/jquery-1.3.2.min.js"></script>
 		<script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+		-->
+		<script type="text/javascript" src="js/jqplot/jquery.min.js"></script>
 		<script type="text/javascript" src="js/smoothie.js"></script>
+
+		<script type="text/javascript" src="js/jqplot/jquery.jqplot.js"></script>
+		<script type="text/javascript" src="js/jqplot/jquery.jqplot.css"></script>
+
+		<script type="text/javascript" src="js/jqplot/plugins/jqplot.barRenderer.min.js"></script>
+		<script type="text/javascript" src="js/jqplot//plugins/jqplot.dateAxisRenderer.min.js"></script>
+		<script type="text/javascript" src="js/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
+		<script type="text/javascript" src="js/jqplot/plugins/jqplot.canvasAxisTickRenderer.min.js"></script>
+		<script type="text/javascript" src="js/jqplot/plugins/jqplot.categoryAxisRenderer.min.js"></script>
+		<script type="text/javascript" src="js/jqplot/plugins/jqplot.highlighter.js"></script>
+		<script type="text/javascript" src="js/jqplot/plugins/jqplot.pointLabels.js"></script>
 
 <?php
 	include 'call_once.php';
 	include 'include.php';
+
+	$dbh = mysql_connect($host, $usr, $pwd) or die("Could not connect to mysql");
+	$sel = mysql_select_db($db, $dbh) or die("Could not select database");
+
+?>
+<?php
+/* insert new pin definition in database */
+if($_POST["update_pin"]){
+	mysql_query("UPDATE atmega SET `dir`='".$_POST['dir']."', `activefunc`='".$_POST['func']."',`desc`='".$_POST['desc']."'  WHERE pin='".$_POST['pin']."' ");
+	echo 'UPDATED PIN DEFINITION<br /><br />';
+}
 ?>
 
 		<!-- OWN SCRIPTS -->
 		<script type="text/javascript">
-			$(function(){
-				$("#slider").slider({
-					value: 0,
-					min: 0,
-					max: 1023,
-					change: function(event, ui){
-						setPWM(ui.value);
-					}
+  var line1 = [];
+
+
+<?php
+	$result = mysql_query("SELECT * FROM atmega WHERE `activefunc` = 'adc' ");
+	$adc_pins = array();
+	while($res = mysql_fetch_array( $result )){ 
+		$adc_pins[] = $res['pin'];
+  		echo 'var plot'.$res['pin'].';';
+		echo 'var plot'.$res['pin'].'_drawn = 0;';
+		echo 'var '.$res['pin'].'limit = 20;';
+		echo 'var '.$res['pin'].' = "'.$res['desc'].'" ;';
+	}
+?>
+
+
+$(document).ready(function(){
+<?php
+	foreach($adc_pins as $pin){
+		echo 'getADCvalues(\''.$pin.'\', '.$pin.'limit, \''.$pin.'\');';
+		echo 'window.setInterval("getADCvalues(\''.$pin.'\','.$pin.'limit,\''.$pin.'\')", 10000);';
+	}
+
+?>
+});
+
+
+			function setNewArtist(){
+				$.post("functions.php",{
+					func: 'setNewArtist',
+					artist: $("#newArtist").val()
+				})
+				$("#newArtist").val("");
+
+			}
+
+			function setNewGenre(){
+				$.post("functions.php",{
+					func: 'setNewGenre',
+					genre: $("#newGenre").val()
+				})
+				$("#newGenre").val("");
+
+			}
+
+
+			function setLight(mynr, myonoff){
+				$.post("functions.php",{
+					func: 'setLight',
+					nr: mynr,
+					onoff: myonoff
+				})
+			}
+
+			function getADC(mypin){
+				$.ajax({
+					url: 'functions.php',
+					type: "POST",
+					data: {func : 'getADC', pin:mypin},
+					success:function(html){strReturn = html;}, async:false
 				});
-			});
+
+				return strReturn;
+			}
+					
 
 			function setPWM(value){
 				$.post("functions.php",{
@@ -59,6 +139,13 @@
 				});
 			}		
 
+			function play(myfolder){
+				$.post("functions.php",{
+					func: 'play',
+						folder : myfolder
+					});
+			}
+
 			function getAlarm(){
 				$.post("functions.php", {
 					func: 'getAlarm'
@@ -75,6 +162,64 @@
 					$("#alarm").html(alarmStr);
 				});
 			}
+
+			function getADCvalues(myadc, mylimit,mychart){
+				$.post("sql_adapter.php", {
+					adc : myadc,
+					limit : mylimit
+				},function (data){
+					JSONobject = JSON.parse(data);
+					list1 = new Array();
+					count=0;
+					for(i=JSONobject.length-1; i >= 0 ; i-=1){
+						if(count % (mylimit/10) == 0){
+							list1[count] = new Array(JSONobject[i].date, JSONobject[i].value, JSONobject[i].date);
+						}else{
+							list1[count] = new Array(JSONobject[i].date, JSONobject[i].value);
+						}
+
+						count++;
+					};
+<?php
+	foreach($adc_pins as $pin){
+		echo '
+			if(myadc == "'.$pin.'"){ 
+				'.$pin.'limit = mylimit;
+				if(plot'.$pin.'_drawn == 1){ 
+					plot'.$pin.'.destroy();
+				} 
+				plot'.$pin.'_drawn = 1;
+				$.jqplot.config.enablePlugins = true;
+				plot'.$pin.' = $.jqplot(mychart, [list1], {
+					    	title: myadc + ": " + '.$pin.',
+						highlighter: {useAxesFormatters: true, tooltipAxes: \'xy\', show: true},
+						seriesDefaults: {
+							showMarker:false
+						},
+					    	axesDefaults: {},
+					    	axes: {
+					      		xaxis: {
+					        		renderer: $.jqplot.CategoryAxisRenderer,
+					       			tickRenderer: $.jqplot.CanvasAxisTickRenderer ,
+								numberTicks:mylimit/4,
+					        		tickOptions: {
+					          		angle: -30,
+					          		fontSize: \'10pt\',
+						  		textColor: \'#000000\'
+					        		}
+					      		},
+							yaxis:{
+								min:0,
+								max:1024
+							}
+					    	}
+					  });
+			}';
+	}
+?>
+				})
+			}
+
 
 			function setAlarm(){
 				// get input values of fields
@@ -138,8 +283,9 @@
 			}
 
 
-		</script>
 
+
+		</script>
 	</head>
 
 	<body>
@@ -153,10 +299,14 @@
 		<div class="main">
 			<!-- PIN BUTTONS -->
 			<div class="set">
-				<h2>Read Pin values (not functional atm)</h2>
+				<h2>Read ADCs</h2>
 				<!-- Way to call the functions -->
-				<span class="button" onclick="getPinValue(0)">Test Pin Value 0</span>
-				<span class="button" onclick="getPinValue(1)">Test Pin Value 1</span><br /><br />
+<?php
+	$result = mysql_query("SELECT * FROM atmega WHERE `activefunc` = 'adc' ");
+	while($res = mysql_fetch_array( $result )){ 
+ 		echo '<span class="button" onclick="getADC('.$res['pin'].')">'.$res['pin'].'</span>';
+	}
+?>
 
 				<!-- div in which the results get displayed -->
 				<div id="result" style="width:200px;border:1px dotted black;">&gt;&gt;</div>
@@ -166,16 +316,154 @@
 				<h2>Set Pin values</h2>
 				<!-- Way to call the functions -->
 <?php
-	for($i = 17; $i < 26; $i++){
-		echo '<span class="smallbutton" onclick="setPinValue('.$i.',1)" >P'.$i.'</span>
-		<span class="smallbutton negative" onclick="setPinValue('.$i.',0)">P'.$i.'</span>';
+	$result = mysql_query("SELECT * FROM atmega WHERE `activefunc` = 'dig' AND `dir` = 'out' ");
+	while($res = mysql_fetch_array( $result )){ 
+		echo '<span class="smallbutton" onclick="setPinValue('.$res['pin'].',1)" >'.$res['pin'].'</span>
+		<span class="smallbutton negative" onclick="setPinValue('.$res['pin'].',0)">'.$res['pin'].'</span>';
 	}
 ?>
-			<!-- jquery slide control for pwm -->
-			<div id="slider"></div>
-				<!-- div in which the results get displayed -->
-			</div><!-- set -->
+			</div><!-- set pin values -->
 
+			<!-- LIGHTS -->
+			<div class="set">
+				<h2>Lights</h2>
+<?php
+				echo '<span class="smallbutton" onclick="setLight(4,1)">Blue On</span><span class="smallbutton negative" onclick="setLight(4,0)">Blue Off</span>';
+				echo '<span class="smallbutton" onclick="setLight(3,1)">Sides On</span><span class="smallbutton negative" onclick="setLight(3,0)">Sides Off</span>';
+?>
+			</div>
+			<!-- set -->
+
+			<!-- PIN FUNCS -->
+			<div class="set">
+				<h2>Set Pin Functions</h2>
+				TODO: Call Serial Program to tell atmega new pin definitions, or create backend server that reads database and talks to atmega
+				<br style="clear:both;" />
+				<br style="clear:both;" />
+
+<?php
+if($_POST["pin_func"]){
+	echo '<form action="" method="post">';
+	if($_POST["pin"]){
+		echo '<input type="hidden" name="update_pin" value="1" />';
+		echo '<input type="hidden" name="pin" value="'.$_POST['pin'].'" />';
+		echo $_POST["pin"].' ';
+		$desc = "n/a";
+		$dir = "n/a";
+		$result = mysql_query("SELECT * FROM atmega WHERE `pin` = '".$_POST["pin"]."' ");
+		while($res = mysql_fetch_array( $result )){ 
+			$available_funcs = explode("|", $res['availablefunc']);
+			$desc = $res['desc'];
+			$dir = $res['dir'];
+			$interval = $res['interval'];
+		}
+		echo '<select name="func">';
+		foreach($available_funcs as $func){
+			echo '<option value="'.$func.'">'.$func.'</option>';
+		}
+		echo '</select>';
+		echo ' ';
+		echo '<select name="dir">';
+		if($dir == "in"){
+			echo '<option value="in" selected>in</option>';
+		}else{
+			echo '<option value="in">in</option>';
+		}
+		if($dir == "out"){
+			echo '<option value="out" selected>out</option>';
+		}else{
+			echo '<option value="out">out</option>';
+		}
+		echo '<select>';
+		echo '<input type="text" name="desc" value="'.$desc.'"/>';
+		echo '<input type="text" name="interval" value="'.$interval.'" /> Seconds';
+		echo '<input type="submit" value="save" />';
+
+	}else{
+		echo 'NO PIN SUPPLIED !';
+	}
+	echo '</form>';
+}
+				/* left side pin descriptions */
+				$result = mysql_query("SELECT * FROM atmega ORDER BY `nr` ");
+				echo '<div style="float:left;">';
+				echo '<form action="" method="post"><input type="hidden" name="pin_func" id="pin_func" value="1" />';
+				while($res = mysql_fetch_array( $result )){ 
+					if($res['nr'] < 15){
+						echo '<div style="float:left;width:230px;color:#444;">'.$res['desc'].' </div>';
+						echo $res['pin'] ;
+						if($res['activefunc'] != "pwr"){
+							if($res['activefunc'] == "adc"){
+								echo ' '.$res['interval'].' ';
+							}
+							 echo ' '.$res['activefunc'].'  ';
+						}
+						if($res['dir'] == "in") echo '<span style="float:right;margin-left:10px;margin-right:5px;">&rarr;</span>';
+						if($res['dir'] == "out") echo '<span style="float:right;margin-left:10px;margin-right:5px;">&larr;</span>';
+						if($res['activefunc'] == "pwr"){
+							echo '<span style="float:right;margin-left:10px;margin-right:5px;">&#9889;</span>';
+						}else{
+							if($res['dir'] == "n/a") echo '<span style="float:right;margin-left:10px;margin-right:5px;">&#9744;</span>';
+						}
+						echo '<br style="clear:both;height:0px;padding:0;margin:0"/>';
+					}
+				}
+				echo '</div>';
+
+				echo '<div style="border:2px solid black;border-right:none;width:60px;float:left;">';
+				$result = mysql_query("SELECT * FROM atmega ORDER BY `nr` ");
+				while($res = mysql_fetch_array( $result )){ 
+					if($res['nr'] < 15) 
+						if($res['activefunc'] != "pwr"){
+							echo '<input type="submit" class="smallerbutton" name="pin" id="pin" value="'.$res['pin'].'" /><br />';	
+						}else{
+							echo '<span style="float:left">'.$res['pin'].'</span><br />';
+						}
+				}
+				echo '</div>';
+				echo '<div style="border:2px solid black;border-left:none;width:60px;float:left;">';
+				$result = mysql_query("SELECT * FROM atmega ORDER BY `nr` DESC");
+				while($res = mysql_fetch_array( $result )){ 
+					if($res['nr'] >= 15) 
+						if($res['activefunc'] != "pwr"){
+							echo '<input type="submit" class="smallerbutton" style="float:right;" name="pin" id="pin" value="'.$res['pin'].'" /><br />';
+						}else{
+							echo '<span style="float:right">'.$res['pin'].'</span><br />';
+						}
+				}
+				echo '</div>';
+				
+				/* right side pin descriptions */
+				$result = mysql_query("SELECT * FROM atmega ORDER BY `nr` DESC ");
+				echo '<div style="float:left;">';
+				while($res = mysql_fetch_array( $result )){ 
+					if($res['nr'] >= 15){
+						if($res['dir'] == "in") echo '<span style="float:left;margin-right:10px;margin-left:5px;">&larr;</span>';
+						if($res['dir'] == "out") echo '<span style="float:left;margin-right:10px;margin-left:5px;">&rarr;</span>';
+						if($res['activefunc'] == "pwr"){
+
+							echo '<span style="float:left;margin-right:10px;margin-left:5px;">&#9889;</span>';
+						}else{
+							if($res['dir'] == "n/a") echo '<span style="float:left;margin-right:10px;margin-left:5px;">&#9744;</span>';
+						}
+
+						echo '  '.$res['pin'] ;
+						if($res['activefunc'] != "pwr"){
+							echo ' '.$res['activefunc'].' ';
+ 							if($res['activefunc'] == "adc"){
+								echo ' '.$res['interval'].'s ';
+							}
+						}
+						echo '<div style="float:right;width:230px;color:#444;text-align:right;"> '.$res['desc'].'</div>';
+						echo '<br style="clear:both;height:0px;padding:0;margin:0"/>';
+					}
+				}
+				echo '</form>';
+				echo '</div>';
+
+?>
+			<br style="clear:both;" />
+			</div><!-- set -->
 
 			<!-- GRAPHS -->
 			<div class="set">
@@ -183,6 +471,36 @@
 				<canvas id="mycanvas" width="400" height="100"></canvas>
 			</div><!-- set -->
 
+			<!-- GRAPHS -->
+			<div class="set">
+				<h2>Temperatures</h2>
+<?php
+	foreach($adc_pins as $pin){
+		echo '<a href="javascript:void(0)" onClick="getADCvalues(\''.$pin.'\', 120, \''.$pin.'\')">120 '.$pin.'</a> ';
+		echo '<a href="javascript:void(0)" onClick="getADCvalues(\''.$pin.'\', 720, \''.$pin.'\')">720 '.$pin.'</a> ';
+		echo ' <a href="javascript:void(0)" onClick="getADCvalues(\''.$pin.'\', 1440, \''.$pin.'\')">1440 '.$pin.'</a> ';
+		echo ' <a href="javascript:void(0)" onClick="getADCvalues(\''.$pin.'\', 2880, \''.$pin.'\')">2880 '.$pin.'</a> ';
+		echo '<div id="'.$pin.'" style="height:300px; width:100%;"></div>';
+		echo '<div class="code prettyprint">';
+		echo '<pre class="code prettyprint brush: js"></pre>';
+		echo '</div>';
+
+	}
+?>
+
+			</div><!-- set -->
+
+			<div class="set">
+				<h2>Music</h2>
+				<a href="./remote/web_clients/phpmp">Remote</a><br />
+				<h2>Add LastFm Playlists</h2>
+				<input type="text" id="newArtist" />
+				<span class="smallbutton" onclick="setNewArtist()">+Artist</span><br />
+				<input type="text" id="newGenre" />
+				<span class="smallbutton" onclick="setNewGenre()">+Genre</span><br />
+			</div><!-- set -->
+
+			
 			<!-- ALARM CLOCK -->
 			<div class="set">
 				<h2>Alarm Clock</h2>
@@ -222,6 +540,7 @@
 			cpuLine.append(new Date().getTime(), getCPULoad());
 		}, 1000);
 		smoothie.addTimeSeries(cpuLine, { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 3 });
+
 	</script>
 	<script type="text/javascript">
 			/* refresh the fields directly on page load */

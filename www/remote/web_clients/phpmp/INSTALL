@@ -1,0 +1,52 @@
+                                phpMp - INSTALL
+
+Requirements
+------------
+
+1) Music Player Daemon (MPD) (0.12.0 or greater) - http://www.musicpd.org
+2) Web server such as Apache (included with many distributions)
+3) PHP >= 4 (works fine with PHP 5.x also) for your webserver (included with many distributions)
+
+Options
+-------
+
+1) gzip compiled into PHP to browse shoutcast streams.
+
+Download
+--------
+
+Get the latest release of phpMp from http://www.musicpd.org
+
+Install
+-------
+
+1) move phpMp archive to a directory accessible by the web server
+
+$ cp phpMp-x.x.x.tar.gz public_html/
+
+2) cd to where you copied the phpMp archive
+
+$ cd public_html
+
+3) untar and unzip archive
+
+$ tar zxvf phpMp-x.x.x.tar.gz
+
+4) configure options (such as port MPD listens to and host MPD is running on)
+using your favorite text editor, edit config.php
+
+5) it maybe required that you change permissions of the directory and the files,
+if using apache use something like: chown apache:apache; chmod 550
+
+6) It is optional but *highly recommended* to make sure allow_url_fopen = On; in your php.ini
+
+example:
+$ vi phpMp-x.x.x/config.php
+
+Using phpMp
+---------
+
+Point your favorite web browser at the location of phpMp on your web server
+
+example:
+http://my.webserver.com/~myusername/phpMp-x.x.x

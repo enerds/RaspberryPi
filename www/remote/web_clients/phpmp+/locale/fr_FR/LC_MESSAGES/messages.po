@@ -1,0 +1,151 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.2.2\n"
+"Report-Msgid-Bugs-To: Nobody\n"
+"POT-Creation-Date: 2004-05-23 19:39+0200\n"
+"PO-Revision-Date: 2004-05-23 19:43+0100\n"
+"Last-Translator: BohwaZ <bohwaz at kd2 dot org>\n"
+"Language-Team: French <ss@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: config.php:34
+msgid "Configuration has been saved."
+msgstr "La configuration a été enregistrée."
+
+#: files.php:173
+msgid "No results found to your search."
+msgstr ""
+
+#: functions.inc.php:17
+msgid " days "
+msgstr " jours"
+
+#: functions.inc.php:25
+msgid "Error"
+msgstr "Erreur"
+
+#: functions.inc.php:27
+msgid "Back"
+msgstr "Retour"
+
+#: functions.inc.php:96
+msgid "Connexion error. Can't connect to Music Player Daemon."
+msgstr ""
+
+#: functions.inc.php:97
+msgid "Reload"
+msgstr "Recharger"
+
+#: functions.inc.php:99
+msgid "Configure"
+msgstr "Configurer"
+
+#: playlist.php:55
+msgid "Updating DB, please wait..."
+msgstr ""
+
+#: playlist.php:58
+msgid "Database updated."
+msgstr ""
+
+#: playlist.php:108
+msgid "Playing"
+msgstr "Lecture"
+
+#: playlist.php:111
+msgid "Paused"
+msgstr "En pause"
+
+#: playlist.php:114
+msgid "Stopped"
+msgstr "Arrêter"
+
+#: playlist.php:117
+msgid "Unknow state"
+msgstr ""
+
+#: playlist.php:179 playlist.php:180 playlist.php:207 playlist.php:208
+msgid "Repeat"
+msgstr ""
+
+#: playlist.php:180 playlist.php:182 playlist.php:184 playlist.php:208
+#: playlist.php:210 playlist.php:212
+msgid "Off"
+msgstr ""
+
+#: playlist.php:180 playlist.php:182 playlist.php:184 playlist.php:208
+#: playlist.php:210 playlist.php:212
+msgid "On"
+msgstr ""
+
+#: playlist.php:181 playlist.php:182 playlist.php:209 playlist.php:210
+msgid "Random"
+msgstr ""
+
+#: playlist.php:183 playlist.php:184 playlist.php:211 playlist.php:212
+msgid "Crossfade"
+msgstr ""
+
+#: playlist.php:188 playlist.php:196 playlist.php:215
+msgid "Previous"
+msgstr ""
+
+#: playlist.php:189 playlist.php:197 playlist.php:216
+msgid "Play"
+msgstr ""
+
+#: playlist.php:190 playlist.php:198 playlist.php:217
+msgid "Pause"
+msgstr ""
+
+#: playlist.php:191 playlist.php:199 playlist.php:218
+msgid "Stop"
+msgstr ""
+
+#: playlist.php:192 playlist.php:200 playlist.php:219
+msgid "Next"
+msgstr ""
+
+#: playlist.php:228
+msgid "Decrease"
+msgstr ""
+
+#: playlist.php:230
+msgid "Increase"
+msgstr ""
+
+#: playlist.php:234
+msgid "Playlist"
+msgstr ""
+
+#: playlist.php:239
+msgid "Shuffle"
+msgstr ""
+
+#: playlist.php:240
+msgid "Save"
+msgstr ""
+
+#: playlist.php:241
+msgid "Clear"
+msgstr ""
+
+#: playlist.php:242
+msgid "Show"
+msgstr ""
+
+#: playlist.php:243 playlist.php:279
+msgid "Browse files"
+msgstr ""
+
+#: playlist.php:272
+msgid "Remove"
+msgstr ""

@@ -1,0 +1,256 @@
+/* =============== Playbar styles =================== */
+/* =============== Buttons bar ====================== */
+
+.buttons {
+
+    border: 1px solid;
+    height: 24px;
+    width: 105px;
+    background-color: #000;
+}
+
+/* =============== Buttons styles - main ============ */
+
+.button_play {
+    background-image: url(images/play.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 2px 2px 2px 2px;
+}
+
+.button_pause {
+    background-image: url(images/pause.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 2px 2px 2px 2px;
+}
+
+.button_stop {
+    background-image: url(images/stop.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 2px 2px 2px 2px;
+}
+
+.button_next {
+    background-image: url(images/next.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 2px 2px 2px 2px;
+}
+
+.button_prev {
+    background-image: url(images/prev.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 2px 2px 2px 2px;
+}
+
+
+
+
+/* =============== Buttons styles - hover ============ */
+
+
+.button_play:hover {
+    background-image: url(images/play_hover.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 3px 1px 1px 3px;
+}
+
+.button_pause:hover {
+    background-image: url(images/pause_hover.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 3px 1px 1px 3px;
+}
+
+
+.button_stop:hover {
+    background-image: url(images/stop_hover.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 3px 1px 1px 3px;
+}
+
+.button_next:hover {
+    background-image: url(images/next_hover.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 3px 1px 1px 3px;
+}
+
+.button_prev:hover {
+    background-image: url(images/prev_hover.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 3px 1px 1px 3px;
+}
+
+
+
+/* =============== Buttons styles - selected ============ */
+
+.button_play_selected, .button_play_selected:active {
+    background-image: url(images/play_selected.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 2px 2px 2px 2px;
+}
+
+.button_pause_selected {
+    background-image: url(images/pause_selected.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 2px 2px 2px 2px;
+}
+
+.button_stop_selected {
+    background-image: url(images/stop_selected.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 2px 2px 2px 2px;
+}
+
+
+/* =============== Buttons styles - selected hover ========== */
+
+.button_play_selected:hover {
+    background-image: url(images/play_selected.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 3px 1px 1px 3px;
+}
+
+.button_pause_selected:hover {
+    background-image: url(images/pause_selected.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 3px 1px 1px 3px;
+}
+
+.button_stop_selected:hover {
+    background-image: url(images/stop_selected.png);
+    width: 16px;
+    height: 16px;
+    float: left;
+    margin: 3px 1px 1px 3px;
+}
+
+
+
+
+
+
+.volume {
+
+    background-image:url(images/volume.png);
+    width:256px;
+    height:16px;
+}
+
+.volume_back {
+    background-color: black;
+    width: 128px;
+    height: 16px;
+
+}
+
+#time_graph_back {
+
+    width: 100%;
+    height:20px;
+    background-color:red;
+}
+
+#time_graph {
+
+    width: 0%;
+    height:100%;
+    background-color:green;
+}
+
+
+table {
+
+    border: 1px solid #AAA;
+
+}
+
+thead td {
+
+    background-color: #DDD;
+    border-bottom: 3px solid #CCC;
+    font-weight: bold;
+    text-align:center;
+    
+}
+
+tbody tr.row_light td {
+    background-color: #EEE;
+
+}
+
+tbody tr.row_dark td {
+    background-color: #DDD;
+
+}
+
+tbody tr.row_light_selected,tr.row_dark_selected td {
+    background-color: #FF0;
+    
+}
+
+tbody tr td.current_song {
+
+    font-weight:bold;
+    background-image: url(images/play.png);
+    background-repeat: no-repeat;
+    padding-left: 16px;
+}
+
+
+
+/* =============== Media Library styles =================== */
+
+/* =============== Crumb (path elements) ================== */
+
+/* =============== Last path element (selected) =========== */
+#crumb span {
+
+    font-weight: bold;
+
+}
+
+#crumb a:link {
+
+}
+
+#crumb a:visited {
+
+}
+
+#crumb a:active {
+
+}
+
+#crumb a:hover {
+
+}
+

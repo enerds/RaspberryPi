@@ -1,0 +1,7 @@
+set terminal png 
+set output "temp.png"
+set title "Temperature"                                                         
+set xlabel "t" 
+set ylabel "°C"
+set yrange[ 0 : 40 ]
+plot "templog" w l 

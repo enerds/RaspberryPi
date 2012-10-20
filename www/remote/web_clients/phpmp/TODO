@@ -1,0 +1,21 @@
+*) [printMusicTable]
+	*) Need to fix addall to add in sorted order
+
+*) [i18n]
+	*) Need to look into the gettext/i18n stuff
+
+*) [printMusicTable]
+	*) Need to make table element to take up a whole column, made specifically for metadata comments
+
+
+*) [printPlaylistInfo]
+	*) This table should have never gotten this big and complex. Needs to be broken down to pieces that are a page or less optimally
+
+*) [Search Feature]
+	*) Continue to add new features added for 0.12.0 in search menu
+	*) Add a few new search types
+		*) Playlist
+		*) Streams
+
+*) [Streams Menu]
+	*) Need to make this searchable, by icecast and shoutcast.

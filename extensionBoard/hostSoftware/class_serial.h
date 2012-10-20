@@ -1,4 +1,4 @@
-#include <sys/types.h>                                                                                                                                                                                                                                                                                                         
+#include <sys/types.h> 
 #include <unistd.h>
 #include <cstdlib>
 #include <cstring>
@@ -17,7 +17,7 @@ class Serial{
 	public:
 		Serial(const char * modemdevice);
 		~Serial();
-		std::vector<char> sendReceive(char x);
+		std::vector<char> sendReceive(std::vector<char> x);
 	private:
         	int fd,c, res;
         	struct termios oldtio,newtio;

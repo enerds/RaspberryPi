@@ -5449,7 +5449,7 @@ naming: grid - package width</description>
 <part name="C3" library="capacitor-wima" deviceset="C" device="2,5-3" value="100n"/>
 <part name="X17" library="con-wago-500" deviceset="W237-102" device=""/>
 <part name="P+11" library="supply1" deviceset="+5V" device=""/>
-<part name="GND12" library="supply1" deviceset="GND" device=""/>
+<part name="GND" library="supply1" deviceset="GND" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -5525,7 +5525,7 @@ naming: grid - package width</description>
 <instance part="X17" gate="-1" x="200.66" y="132.08" rot="R270"/>
 <instance part="X17" gate="-2" x="195.58" y="132.08" rot="R270"/>
 <instance part="P+11" gate="1" x="195.58" y="116.84" rot="R180"/>
-<instance part="GND12" gate="1" x="200.66" y="116.84"/>
+<instance part="GND" gate="1" x="200.66" y="116.84"/>
 </instances>
 <busses>
 </busses>
@@ -5677,7 +5677,7 @@ naming: grid - package width</description>
 </segment>
 <segment>
 <pinref part="X17" gate="-1" pin="KL"/>
-<pinref part="GND12" gate="1" pin="GND"/>
+<pinref part="GND" gate="1" pin="GND"/>
 <wire x1="200.66" y1="127" x2="200.66" y2="119.38" width="0.1524" layer="91"/>
 </segment>
 </net>

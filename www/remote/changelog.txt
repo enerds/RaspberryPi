@@ -1,0 +1,48 @@
+
+...::::::	phpMpReloded	....::::::
+
+	C H A N G E L O G 
+
+	
+join the mailing list
+	https://lists.sourceforge.net/lists/listinfo/phpmpreloaded-team
+	
+22/oct/2011 -- [v1.2a] 
+	- fix: the sliders don't function properly (1. volume only goes up to about 25% and 2. seek slider shows time in min:sec instead of seconds)
+	
+16/sep/2011 -- [v1.2]
+	- add: new client "MPD-Web-Remote" for mobile devices added
+		
+08/apr/2011 -- [testing only]
+	- fix: hardconfig (host/port) in IPodMp
+	- fix: hardconfig (host/port) in phpMp+
+	
+27/apr/2010 -- [v1.1c]
+	- fix all "split()" calls and figure out a way of avoiding them as "split()" is deprecated
+		- Deprecated: Function split() is deprecated in /home/tswaehn/public_html/git_dev/phpMpReloaded/web_clients/phpMp/stream_body.php on line 13
+		- Deprecated: Function split() is deprecated in /home/tswaehn/public_html/git_dev/phpMpReloaded/web_clients/phpMp/search_body.php on line 12
+		- Deprecated: Function split() is deprecated in /home/tswaehn/public_html/git_dev/phpMpReloaded/web_clients/phpMp/login_body.php on line 13		
+
+21/mar/2010
+	- added forward file in web_clients
+
+20/mar/2010
+	- changed mpd.class.php to make it compatible to phpMp+ and IPodMp
+	- smaller changes in phpMp+ and IPodMp
+	- modfied "clientswitcher"
+ 	- upgrade version of mpd.class.php to v1.3
+ 		- take over from Hendrik Stoetter
+ 		- removed "split()" as this function is marked depracted
+ 		- added property "xfade" (used by IPodMp, phpMp+)
+ 		- added property "bitrate" (used by phpMp+)
+ 		- added define "MPD_SEARCH_FILENAME"
+ 		- included sorting algorithm "msort"
+ 		- added function validateFile() for guessing a title if no ID3 data is given 
+	
+
+10/mar/2010
+	- fix: when setting the mpd-host and mpd-port via the web interafce a reload was necessary
+	- updated install.txt
+	
+07/mar/2010
+	- removed huge *.tar files from the git history

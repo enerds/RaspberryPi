@@ -1,0 +1,90 @@
+libccid_la-utils.lo: utils.c /usr/include/PCSC/pcsclite.h \
+ /usr/include/PCSC/wintypes.h ccid.h defs.h openct/proto-t1.h ../config.h \
+ /usr/include/stdint.h /usr/include/features.h \
+ /usr/include/bits/predefs.h /usr/include/sys/cdefs.h \
+ /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
+ /usr/include/bits/wchar.h /usr/include/unistd.h \
+ /usr/include/bits/posix_opt.h /usr/include/bits/types.h \
+ /usr/include/bits/typesizes.h \
+ /usr/lib/gcc/arm-linux-gnueabi/4.4.5/include/stddef.h \
+ /usr/include/bits/confname.h /usr/include/getopt.h openct/buffer.h \
+ /usr/include/sys/types.h /usr/include/time.h /usr/include/endian.h \
+ /usr/include/bits/endian.h /usr/include/bits/byteswap.h \
+ /usr/include/sys/select.h /usr/include/bits/select.h \
+ /usr/include/bits/sigset.h /usr/include/bits/time.h \
+ /usr/include/sys/sysmacros.h /usr/include/bits/pthreadtypes.h ccid_usb.h \
+ ccid_ifdhandler.h utils.h debug.h /usr/include/PCSC/debuglog.h
+
+/usr/include/PCSC/pcsclite.h:
+
+/usr/include/PCSC/wintypes.h:
+
+ccid.h:
+
+defs.h:
+
+openct/proto-t1.h:
+
+../config.h:
+
+/usr/include/stdint.h:
+
+/usr/include/features.h:
+
+/usr/include/bits/predefs.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/bits/wchar.h:
+
+/usr/include/unistd.h:
+
+/usr/include/bits/posix_opt.h:
+
+/usr/include/bits/types.h:
+
+/usr/include/bits/typesizes.h:
+
+/usr/lib/gcc/arm-linux-gnueabi/4.4.5/include/stddef.h:
+
+/usr/include/bits/confname.h:
+
+/usr/include/getopt.h:
+
+openct/buffer.h:
+
+/usr/include/sys/types.h:
+
+/usr/include/time.h:
+
+/usr/include/endian.h:
+
+/usr/include/bits/endian.h:
+
+/usr/include/bits/byteswap.h:
+
+/usr/include/sys/select.h:
+
+/usr/include/bits/select.h:
+
+/usr/include/bits/sigset.h:
+
+/usr/include/bits/time.h:
+
+/usr/include/sys/sysmacros.h:
+
+/usr/include/bits/pthreadtypes.h:
+
+ccid_usb.h:
+
+ccid_ifdhandler.h:
+
+utils.h:
+
+debug.h:
+
+/usr/include/PCSC/debuglog.h:

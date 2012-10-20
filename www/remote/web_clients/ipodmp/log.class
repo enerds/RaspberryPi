@@ -1,0 +1,28 @@
+<?php
+// ######################################################
+// ### Logging / Debugging                            ###
+// ###################################################### 
+$PATH2LOGS = "./";
+
+class debug {
+	var $filename="error.htm";		
+	function debug ($level,$debugmessage) {
+		global $PATH2LOGS;	
+		global $DEBUG_LEVEL;
+		global $user;
+		global $PHP_SELF;
+		
+		$temp=$debugmessage;
+		if (!isset($user)) {$u = "guest";}
+		else { $u = $user; }
+		$debugmessage=date("d.m.y H:i:s ")."$u $PHP_SELF $debugmessage"."\n";	
+				$fl= fopen ($PATH2LOGS.$this->filename,"a");
+				if (!$fl) { print ("MAYDAY Unable to open Logfile in $PATH2LOGS <br>");}
+				 
+				fputs($fl,$debugmessage."<br>");
+				fclose($fl);
+
+	}
+}
+
+?>
