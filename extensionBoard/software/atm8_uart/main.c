@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "china_lcd.h"
  
  
 #define UBRR_VAL  ((F_CPU+BAUD*8)/(BAUD*16)-1)
@@ -225,7 +226,6 @@ void switchOff(char *sGroup, int nChannel){
 int main (void) {
     char stringbuffer[64];  // Allgemeiner Puffer für Strings
     uint8_t buffer_full=0;  // noch ein Flag, aber nur in der Hauptschleife
-    char * charpointer;     // Hilfszeiger
 	int sampleValue = 0;
 
     // IO CONFIG
@@ -256,15 +256,28 @@ int main (void) {
     // Stringpuffer initialisieren
     //stringbuffer[0] = '\n';
     //stringbuffer[1] = '\r';
+    
+    init();
+    constructor(_width,_height);
+    setRotation(1);
 
     // Interrupts freigeben
     sei();
 
 	int up = 1;
-	int was_up = 0;
 	
 
     while(1) {
+        fillScreen(ST7735_BLACK);
+        setCursor(0,0);
+        setTextWrap(1);
+        setTextSize(2);
+        {
+            char Buffer[20]; // in diesem {} lokal
+            itoa( OCR1A, Buffer, 10 );
+            print(Buffer);
+        }
+
 	if(up){
 		OCR1A += 10;
 		if(OCR1A >= 2000){
