@@ -57,7 +57,7 @@ TARGET = main
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c china_lcd.c
+SRC = $(TARGET).c china_lcd.c gfx.c
 
 
 # List Assembler source files here.

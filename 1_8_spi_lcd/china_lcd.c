@@ -35,6 +35,7 @@
 #define __PROG_TYPES_COMPAT__
 #define F_CPU 16000000L
 #include "china_lcd.h"
+#include "gfx.h"
 #include <avr/pgmspace.h>
 #include <avr/io.h>
 #include <util/delay.h>

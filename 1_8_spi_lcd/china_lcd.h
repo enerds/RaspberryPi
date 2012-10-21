@@ -12,8 +12,8 @@
 #define RS PD7
 #define RST PD6
 
-static const _width = 128;
-static const _height = 160;
+static int _width = 128;
+static int _height = 160;
 
 /*
  * available functions:
