@@ -19,18 +19,6 @@
   #error Systematischer Fehler der Baudrate grösser 1% und damit zu hoch! 
 #endif
 
-#define R_PC0 1000 // 1000 Ohm am Spannungsteiler von PC0
-/* Connection to PC0 :
- ---------------+
-                |         +- R_PC0 == 1000 Ohm --- +3.3v
-                |         |
-                --- PC0 --+
-                |         |
-                |         +- Temp-Sensor --------- GND
-                |
-                |
-*/
-
 #define uart_buffer_size 256
 
 #define STECKDOSENPIN 2
@@ -66,18 +54,6 @@ void send_ok(void){
 	message[2] = '\n';
 	message[3] = '\r';
 	put_string(message);
-}
-
-int adc2res(int adcValue){
-	int resistance;
-	double adcVoltage = adcValue * 2.56f / 1023.0f;
-	resistance = R_PC0 * (adcVoltage / (3.3f - adcVoltage));
-	return resistance;
-}
-
-
-double res2temp(int res){
-	return (res - 815.0f) / 7.5f;
 }
 
 char* dec2binWzerofill(unsigned long Dec, unsigned int bitLength){
@@ -229,6 +205,7 @@ int main (void) {
 	int sampleValue = 0;
 
     // IO CONFIG
+	// TODO: update the definitions with values from eeprom !
     DDRB = 0xFF;
     DDRC = 0x00;
     PORTC = 0x00;
@@ -260,33 +237,81 @@ int main (void) {
     init();
     constructor(_width,_height);
     setRotation(1);
+    setTextWrap(1);
+    setTextSize(2);
+    setTextColor(ST7735_WHITE, ST7735_BLACK);
+    fillScreen(ST7735_BLACK);
 
     // Interrupts freigeben
     sei();
 
 	int up = 1;
 	
+	int heartarr[11][2];
 
+	heartarr[0][0] = 0;
+	heartarr[0][1] = 1;
+
+	heartarr[1][0] = 1;
+	heartarr[1][1] = 0;
+
+	heartarr[2][0] = 1;
+	heartarr[2][1] = 1;
+		
+	heartarr[3][0] = 1;
+	heartarr[3][1] = 2;
+
+	heartarr[4][0] = 2;
+	heartarr[4][1] = 1;
+	
+	heartarr[5][0] = 2;
+	heartarr[5][1] = 2;
+
+	heartarr[6][0] = 2;
+	heartarr[6][1] = 3; 
+
+	heartarr[7][0] = 3;
+	heartarr[7][1] = 0;
+
+	heartarr[8][0] = 3;
+	heartarr[8][1] = 1;
+
+	heartarr[9][0] = 3;
+	heartarr[9][1] = 2;
+
+	heartarr[10][0] = 4;
+	heartarr[10][1] = 1;
+
+	char tmp[5];
+
+	// pre-compute colors to speed it up later
+	int16_t col[41];
+	for(int i=0;i<=2000;i+=50){
+		col[i/50] = Color565(i/8,0,0);
+	}
     while(1) {
-        fillScreen(ST7735_BLACK);
-        setCursor(0,0);
-        setTextWrap(1);
-        setTextSize(2);
-        {
-            char Buffer[20]; // in diesem {} lokal
-            itoa( OCR1A, Buffer, 10 );
-            print(Buffer);
-        }
+	if(OCR1A % 50 == 0){
+			for(int i=0;i<11;i++){
+				fillRect(
+					39+heartarr[i][1]*10,
+					55+heartarr[i][0]*10, 
+					10,
+					10,
+					col[OCR1A/50]);
+			}
+	}
+
 
 	if(up){
-		OCR1A += 10;
+		OCR1A += 20;
 		if(OCR1A >= 2000){
 			up = 0;
 		}
 	}else{
-		OCR1A -= 8;
+		OCR1A -= 20;
 		if(OCR1A <= 200){
 			up = 1;
+
 		}
 	}
 			
@@ -297,6 +322,7 @@ int main (void) {
         }
 
 	/* SET PINS AS INPUT OR OUTPUT */
+	// TODO: save value to eeprom to keep it consistent after reboot
 	if(stringbuffer[0] == 'P'){ // configure a pin
 		if(stringbuffer[1] == 'B'){
 			if(stringbuffer[3] == '1'){ // set as output
@@ -323,6 +349,7 @@ int main (void) {
 	}
 
 	/* SET PIN HIGH OR LOW */
+	// TODO: save value to eeprom for consistency !
 	if(stringbuffer[0] == 'S'){
 		if(stringbuffer[1] == 'B'){
 			if(stringbuffer[3] == '1'){
@@ -348,6 +375,7 @@ int main (void) {
 		send_ok();
 	}
 
+
 	/* GET ADC VALUE */
 	if(stringbuffer[0] == 'G'){ // adc wert anfordern
 		if(stringbuffer[1] == 'C'){
@@ -355,20 +383,27 @@ int main (void) {
 			ADMUX = 0x00;
 			ADMUX |= (1<<REFS1)| (1<<REFS0); // 0b01000000; // interne Ref-Spannung, avcc, pc0 als adc
 
+			setCursor(0,0);
+
 			if(stringbuffer[2] == '1'){
 				ADMUX |= (1<<MUX0);
+				setCursor(10,15);
 			}
 			if(stringbuffer[2] == '2'){
 				ADMUX |= (1<<MUX1);
+				setCursor(10,30);
 			}
 			if(stringbuffer[2] == '3'){
 				ADMUX |= (1<<MUX0) | (1<<MUX1);
+				setCursor(10,45);
 			}
 			if(stringbuffer[2] == '4'){
 				ADMUX |= (1<<MUX2);
+				setCursor(10,60);
 			}
 			if(stringbuffer[2] == '5'){
 				ADMUX |= (1<<MUX0) | (1<<MUX2);
+				setCursor(10,75);
 			}
 	
 			_delay_ms(10);
@@ -377,11 +412,19 @@ int main (void) {
 			ADCSRA |= (1<<ADSC);
 			while(ADCSRA & (1 << ADSC));  //warten bis konvertierung abgeschlosen
 			sampleValue = ADCW;
-			//dtostrf( res2temp(adc2res(sampleValue)), 5, 2, stringbuffer );
 
 			itoa(sampleValue,stringbuffer,10);
-			strcat(stringbuffer, "\n\r");
 
+			itoa(sampleValue,tmp,10);
+
+			// show on lcd
+				_delay_ms(20);
+				//strcat(tmp, "      ");
+				//_delay_ms(20);
+				print(tmp);
+			
+
+			strcat(stringbuffer, "\n\r");
 			_delay_ms(10);
 			put_string(stringbuffer);
 
@@ -456,7 +499,7 @@ ISR(USART_UDRE_vect) {
     if (data == 0 ) {
         UCSRB &= ~(1<<UDRIE);       // ja, dann UDRE Interrupt ausschalten
         uart_tx_p = uart_tx_buffer; // Pointer zurücksetzen
-        uart_tx_flag = 1;           // Flag setzen, Übertragung beeendet
+        uart_tx_flag = 1;           // Flag setzen, Ubertragung beeendet
     }else{
 	 UDR = data;                // nein, Daten senden
 	_delay_ms(10);
